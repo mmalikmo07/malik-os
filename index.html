@@ -466,6 +466,7 @@ select.os-input{cursor:pointer;}
     <button class="nav-btn" onclick="showPage('gym')">GYM</button>
     <button class="nav-btn" onclick="showPage('careers')">CAREERS</button>
     <button class="nav-btn" onclick="showPage('hustle')">HUSTLE</button>
+    <button class="nav-btn" onclick="showPage('university')">UNI</button>
     <button class="nav-btn" onclick="showPage('habits')">HABITS</button>
   </div>
   <div class="topbar-right">
@@ -490,6 +491,7 @@ select.os-input{cursor:pointer;}
     <div class="sidebar-sep"></div>
     <div class="sidebar-item" onclick="showPage('careers')">🎯<span class="tip">Career Roadmap</span></div>
     <div class="sidebar-item" onclick="showPage('hustle')">💸<span class="tip">Side Hustle</span></div>
+    <div class="sidebar-item" onclick="showPage('university')">🎓<span class="tip">University</span></div>
     <div class="sidebar-item" onclick="showPage('habits')">✅<span class="tip">Habit Tracker</span></div>
   </div>
 
@@ -585,7 +587,7 @@ select.os-input{cursor:pointer;}
             <button class="btn btn-lime btn-sm" onclick="renderMindmap()">RENDER ►</button>
           </div>
           <div class="panel-body">
-            <textarea class="os-textarea" id="mindmap-text" placeholder="My Projects&#10;  LED Matrix Display&#10;    Arduino control&#10;    Bluetooth module&#10;    PCB design&#10;  Audio Spectrum Analyser&#10;    FFT algorithm&#10;    OLED display&#10;  PID Controller&#10;    Temperature sensor&#10;    Motor control" style="min-height:140px" oninput="clearTimeout(window._mmTimer);window._mmTimer=setTimeout(renderMindmap,200)"></textarea>
+            <textarea class="os-textarea" id="mindmap-text" placeholder="My Projects&#10;  LED Matrix Display&#10;    Arduino control&#10;    Bluetooth module&#10;    PCB design&#10;  Audio Spectrum Analyser&#10;    FFT algorithm&#10;    OLED display&#10;  PID Controller&#10;    Temperature sensor&#10;    Motor control" style="min-height:140px" id="mindmap-text-area" oninput="clearTimeout(window._mmTimer);window._mmTimer=setTimeout(renderMindmap,200)" onkeydown="handleMindmapTab(event)"></textarea>
             <svg id="mindmap-svg" style="margin-top:10px"></svg>
           </div>
         </div>
@@ -770,6 +772,20 @@ select.os-input{cursor:pointer;}
           <div style="color:var(--muted2);font-size:12px">No sessions logged yet.</div>
         </div>
       </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">📈 Weight Progress Chart</span>
+          <div style="display:flex;gap:6px;align-items:center">
+            <select class="os-input" id="chart-exercise" style="width:200px;font-size:10px"></select>
+            <button class="btn btn-lime btn-sm" onclick="renderProgressChart()">SHOW ►</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <canvas id="progress-chart" height="200" style="width:100%;background:var(--s2);border:1px solid var(--border)"></canvas>
+          <div id="chart-empty" style="color:var(--muted2);font-size:12px;text-align:center;padding:20px">Log sessions to see your progress</div>
+        </div>
+      </div>
     </div>
 
     <!-- ══════════════════════════════
@@ -779,11 +795,25 @@ select.os-input{cursor:pointer;}
       <div class="section-tag">Career Roadmap</div>
       <h2>EEE <span style="color:var(--lime)">PATHWAYS</span></h2>
 
+      <div class="mode-toggle" style="margin-bottom:14px">
+        <button class="mode-btn active" onclick="setCareerView('grid',this)">GRID VIEW</button>
+        <button class="mode-btn" onclick="setCareerView('tree',this)">TREE MAP</button>
+      </div>
+
       <div id="careers-grid-view">
         <div class="panel">
           <div class="panel-header"><span class="panel-title">Select Your Career Path — AI Builds Your Roadmap</span></div>
           <div class="panel-body">
             <div class="career-list" id="career-list-container"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="careers-tree-view" style="display:none">
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title">EEE Career Tree — Salary · Skills · Overlap</span></div>
+          <div class="panel-body" style="padding:10px">
+            <svg id="career-tree-svg" style="width:100%;min-height:500px;background:var(--s2);border:1px solid var(--border);display:block"></svg>
           </div>
         </div>
       </div>
@@ -815,10 +845,52 @@ select.os-input{cursor:pointer;}
           <div class="ai-box" id="hustle-ideas" style="min-height:110px">Enter your skills and available time, then generate personalised hustle ideas...</div>
         </div>
       </div>
+
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">🔬 Business Idea Analyser — Cost · Scalability · Viability</span></div>
+        <div class="panel-body">
+          <div style="margin-bottom:10px;font-size:11px;color:var(--muted)">Describe any business idea and get a full AI report — estimated costs, revenue model, scalability ceiling, risks, and your EEE advantage.</div>
+          <textarea class="os-textarea" id="business-idea-input" placeholder="e.g. A subscription SaaS tool that helps EEE students track their lab sessions and auto-generates lab reports using AI..." style="min-height:90px"></textarea>
+          <div style="margin-top:10px">
+            <button class="btn btn-violet" onclick="analyseBusinessIdea()">⚡ ANALYSE IDEA</button>
+          </div>
+          <div class="ai-box" id="business-analysis" style="margin-top:12px;min-height:80px;display:none"></div>
+        </div>
+      </div>
+
       <div class="panel">
         <div class="panel-header"><span class="panel-title">Q2 2026 — Active Exploration</span></div>
         <div class="panel-body" id="hustle-active"></div>
       </div>
+    </div>
+
+    <!-- ══════════════════════════════
+         UNIVERSITY PAGE
+    ══════════════════════════════ -->
+    <div class="page" id="page-university">
+      <div class="section-tag">University Core</div>
+      <h2>GRADE <span style="color:var(--lime)">CALCULATOR</span></h2>
+
+      <div class="grid-2" style="margin-bottom:14px">
+        <div class="stat-card"><div class="stat-val" id="overall-grade" style="font-size:28px">—</div><div class="stat-label">Overall Year Grade</div></div>
+        <div class="stat-card" style="border-left-color:var(--teal)"><div class="stat-val" style="color:var(--teal);font-size:28px" id="overall-class">—</div><div class="stat-label">Degree Class</div></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Add Module</span>
+          <button class="btn btn-lime btn-sm" onclick="showAddModule()">+ ADD MODULE</button>
+        </div>
+        <div class="panel-body" id="add-module-form" style="display:none">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+            <input type="text" class="os-input" id="mod-name" placeholder="Module name e.g. Circuit Theory" style="flex:2;min-width:180px">
+            <input type="number" class="os-input" id="mod-credits" placeholder="Credits e.g. 10" style="width:100px">
+            <button class="btn btn-teal btn-sm" onclick="addModule()">ADD</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="modules-container"></div>
     </div>
 
     <!-- ══════════════════════════════
@@ -840,764 +912,1122 @@ select.os-input{cursor:pointer;}
 </div><!-- /os-layout -->
 
 <script>
-// ═══════════════════════════════════════
-// CLOCK
-// ═══════════════════════════════════════
-function updateClock(){
-  const now = new Date();
-  document.getElementById('clock').textContent = now.toLocaleTimeString('en-GB');
-}
-setInterval(updateClock,1000); updateClock();
+// ═══════════════════════════════════════════════════════════════════
+// MALIK OS — Frontend v4  |  Wired to Node.js backend on Railway
+// ═══════════════════════════════════════════════════════════════════
 
-// ═══════════════════════════════════════
-// API KEY
-// ═══════════════════════════════════════
-let apiKey = localStorage.getItem('malik-os-api-key') || '';
-function setAiConnected(v){
-  const dot=document.getElementById('ai-status-dot');
-  if(v){ dot.classList.add('live'); }
-  else { dot.classList.remove('live'); }
-}
-if(apiKey){
-  document.getElementById('api-key-input').value='••••••••••••••••';
-  setAiConnected(true);
-}
-function saveApiKey(){
-  const val=document.getElementById('api-key-input').value.trim();
-  if(val && !val.includes('•')){
-    apiKey=val;
-    localStorage.setItem('malik-os-api-key',apiKey);
-    document.getElementById('api-key-input').value='••••••••••••••••';
-    setAiConnected(true);
-    showNotif('AI Connected — Intelligence Active');
-  }
-}
+// ── CONFIG ────────────────────────────────────────────────────────
+// Set this to your Railway backend URL after deploying
+const API = 'https://malik-os-backend-production.up.railway.app';
 
-async function testAI(){
-  if(!apiKey){ showNotif('Paste your API key first then click CONNECT AI'); return; }
-  showNotif('Testing AI connection...');
-  const result = await askClaude('Reply with exactly: "MALIK OS online." — nothing else.', 20);
-  if(result.includes('MALIK OS online') || result.includes('online')){
-    showNotif('✓ AI Connected & Working');
-    setAiConnected(true);
-  } else {
-    showNotif('AI Test Result: ' + result.substring(0,80));
-  }
-}
-
-// ═══════════════════════════════════════
-// CLAUDE API CALL
-// Routes through CORS proxy when running as local file://
-// ═══════════════════════════════════════
-async function askClaude(prompt, maxTokens=600){
-  if(!apiKey) return 'Connect your Claude API key in the top bar to activate AI features.';
-
-  const direct = 'https://api.anthropic.com/v1/messages';
-  // Anthropic API has no CORS headers - must always proxy regardless of host
-  const url = 'https://corsproxy.io/?' + encodeURIComponent(direct);
-
-  try{
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: maxTokens,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-
-    if(!res.ok){
-      const errText = await res.text();
-      return 'API Error ' + res.status + ': ' + errText.substring(0, 300);
+// ── API HELPER ────────────────────────────────────────────────────
+async function api(method, path, body) {
+  try {
+    const opts = {
+      method,
+      headers: { 'Content-Type': 'application/json' }
+    };
+    if(body) opts.body = JSON.stringify(body);
+    const res = await fetch(API + path, opts);
+    if(!res.ok) {
+      const err = await res.text();
+      throw new Error(err);
     }
-
-    const data = await res.json();
-    if(data.content && data.content[0]) return data.content[0].text;
-    if(data.error) return 'Anthropic Error: ' + data.error.message;
-    return 'Unexpected response: ' + JSON.stringify(data).substring(0, 200);
+    return res.json();
   } catch(e) {
-    return 'Network Error: ' + e.message;
+    // Only log if backend has been configured (not the placeholder URL)
+    if(!API.includes('malik-os-backend.up.railway.app') || !e.message.includes('fetch')) {
+      console.warn('API:', path, e.message);
+    }
+    throw e;
   }
 }
 
-// ═══════════════════════════════════════
-// NAVIGATION
-// ═══════════════════════════════════════
-function showPage(id){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.sidebar-item').forEach(s=>s.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
-  document.querySelectorAll('.nav-btn').forEach(b=>{
-    if(b.textContent.toLowerCase().includes(id.substring(0,4))) b.classList.add('active');
+// ── CLOCK ────────────────────────────────────────────────────────
+function updateClock() {
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString('en-GB');
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── GREETING (time-based) ────────────────────────────────────────
+function getGreeting() {
+  const h = new Date().getHours();
+  if(h >= 4  && h < 12) return 'Good Morning, Malik';
+  if(h >= 12 && h < 17) return 'Good Afternoon, Malik';
+  if(h >= 17 && h < 21) return 'Good Evening, Malik';
+  return 'Still Up, Malik?';
+}
+const greetEl = document.querySelector('.hero-name');
+if(greetEl) greetEl.textContent = getGreeting();
+
+// ── NAVIGATION ───────────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+  const page = document.getElementById('page-' + id);
+  if(!page) return;
+  page.classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    if(b.textContent.trim().toLowerCase() === id.toLowerCase() ||
+       b.getAttribute('onclick') === "showPage('" + id + "')")
+      b.classList.add('active');
+  });
+  document.querySelectorAll('.sidebar-item').forEach(s => {
+    if((s.getAttribute('onclick') || '').includes("'" + id + "'"))
+      s.classList.add('active');
   });
   updateStats();
 }
 
-// ═══════════════════════════════════════
-// SCHEDULE
-// ═══════════════════════════════════════
-function buildSchedule(){
-  const days=['Sat','Sun','Mon','Tue','Wed','Thu','Fri'];
-  const s={
-    Sat:['🕌 Sabaq (7am)','⚗️ Project Lab (9am)','🧮 Curiosity (12pm)','💪 Gym D4 (2pm)','💸 Hustle (5pm)'],
-    Sun:['📖 Manzil (9am)','🎓 Uni catch-up (11am)','⚗️ Projects (3pm)','🔁 Weekly Review (6pm)','📅 Plan week (7pm)'],
-    Mon:['🕌 Sabaq (7am)','🎓 Lectures (9am)','🎓 Uni review (2pm)','💪 Gym D1 (5pm)','⚗️ Project (8pm)'],
-    Tue:['🕌 Sabqi (7am)','🎓 Lectures (9am)','🧮 Curiosity (2pm)','🥊 Sport (5pm)','📖 Tilawah (9pm)'],
-    Wed:['🕌 Sabaq (7am)','🎓 Lectures (9am)','⚗️ Projects (2pm)','💪 Gym D2 (5pm)','🎓 Problems (8pm)'],
-    Thu:['🕌 Sabqi (7am)','🎓 Lectures (9am)','🥊 Sport (2pm)','🧮 Curiosity (5pm)','📖 Tilawah (9pm)'],
-    Fri:['🕌 Sabaq (7am)','🎓 Light review','🕌 Jumuʼah (1pm)','💪 Gym/Rest (4pm)','🌙 Protected eve']
+// ── NOTIFICATIONS ────────────────────────────────────────────────
+function showNotif(msg, type) {
+  const ex = document.querySelector('.notif');
+  if(ex) ex.remove();
+  const n = document.createElement('div');
+  n.className = 'notif';
+  const col = type === 'error' ? 'var(--orange)' : 'var(--lime)';
+  n.style.borderColor = col;
+  n.style.borderLeftColor = col;
+  n.innerHTML = '<span style="color:' + col + '">■</span> ' + msg;
+  document.body.appendChild(n);
+  setTimeout(() => n.remove(), 3500);
+}
+
+// ── AI HELPER ────────────────────────────────────────────────────
+async function askAI(endpoint, payload, outputEl) {
+  if(outputEl) {
+    outputEl.innerHTML = '<span class="spinner"></span> AI thinking...';
+    outputEl.className = 'ai-box loading';
+  }
+  try {
+    const data = await api('POST', endpoint, payload);
+    if(outputEl) {
+      outputEl.innerHTML = data.text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      outputEl.className = 'ai-box';
+    }
+    return data.text;
+  } catch(e) {
+    const msg = 'AI Error: ' + e.message + '. Make sure the backend is deployed on Railway.';
+    if(outputEl) { outputEl.innerHTML = msg; outputEl.className = 'ai-box'; }
+    return msg;
+  }
+}
+
+// ── SCHEDULE ─────────────────────────────────────────────────────
+function buildSchedule() {
+  const days = ['Sat','Sun','Mon','Tue','Wed','Thu','Fri'];
+  const s = {
+    Sat: ['🕌 Sabaq (7am)','⚗️ Project Lab (9am)','🧮 Curiosity (12pm)','💪 Gym D4 (2pm)','💸 Hustle (5pm)'],
+    Sun: ['📖 Manzil (9am)','🎓 Uni catch-up (11am)','⚗️ Projects (3pm)','🔁 Weekly Review (6pm)','📅 Plan week (7pm)'],
+    Mon: ['🕌 Sabaq (7am)','🎓 Lectures (9am)','🎓 Uni review (2pm)','💪 Gym D1 (5pm)','⚗️ Project (8pm)'],
+    Tue: ['🕌 Sabqi (7am)','🎓 Lectures (9am)','🧮 Curiosity (2pm)','🥊 Sport (5pm)','📖 Tilawah (9pm)'],
+    Wed: ['🕌 Sabaq (7am)','🎓 Lectures (9am)','⚗️ Projects (2pm)','💪 Gym D2 (5pm)','🎓 Problems (8pm)'],
+    Thu: ['🕌 Sabqi (7am)','🎓 Lectures (9am)','🥊 Sport (2pm)','🧮 Curiosity (5pm)','📖 Tilawah (9pm)'],
+    Fri: ['🕌 Sabaq (7am)','🎓 Light review','🕌 Jumu\u02bcah (1pm)','💪 Gym/Rest (4pm)','🌙 Protected eve']
   };
-  const t=document.getElementById('sched-table');
-  const today=new Date().getDay(); // 0=Sun,6=Sat
-  const todayMap={0:'Sun',1:'Mon',2:'Tue',3:'Wed',4:'Thu',5:'Fri',6:'Sat'};
-  const todayStr=todayMap[today];
-  t.innerHTML=`<tr>${days.map(d=>`<th style="color:${d===todayStr?'var(--lime)':'var(--muted)'}">${d}${d===todayStr?' ★':''}</th>`).join('')}</tr>
-  <tr>${days.map(d=>`<td>${s[d].map(x=>`<div class="sched-block">${x}</div>`).join('')}</td>`).join('')}</tr>`;
+  const t = document.getElementById('sched-table');
+  if(!t) return;
+  const todayMap = {0:'Sun',1:'Mon',2:'Tue',3:'Wed',4:'Thu',5:'Fri',6:'Sat'};
+  const today = todayMap[new Date().getDay()];
+  t.innerHTML = '<tr>' + days.map(d =>
+    '<th style="color:' + (d===today?'var(--lime)':'var(--muted)') + '">' + d + (d===today?' ★':'') + '</th>'
+  ).join('') + '</tr><tr>' + days.map(d =>
+    '<td>' + s[d].map(x => '<div class="sched-block">' + x + '</div>').join('') + '</td>'
+  ).join('') + '</tr>';
 }
 buildSchedule();
 
-// ═══════════════════════════════════════
-// HOME QUICK ASK
-// ═══════════════════════════════════════
-async function quickAsk(){
-  const q=document.getElementById('quick-q').value.trim();
+// ── HOME QUICK ASK ───────────────────────────────────────────────
+async function quickAsk() {
+  const q = document.getElementById('quick-q').value.trim();
   if(!q) return;
-  const el=document.getElementById('quick-answer');
-  el.innerHTML='<span class="spinner"></span> Thinking...';
-  el.className='ai-box loading';
-  const ans=await askClaude(`You are Malik's personal AI assistant. He is a 1st year EEE student at Swansea University. He is building a personal OS with departments: Project Lab, Curiosity Lab (AI/ML pathway), University Core, Quran memorisation, Gym (4-day split), Sport (boxing/table tennis), Side Hustle Lab. Answer this concisely and practically: ${q}`);
-  el.innerHTML=ans.replace(/\n/g,'<br>');
-  el.className='ai-box';
+  const el = document.getElementById('quick-answer');
+  await askAI('/api/ai/ask', { prompt: q, maxTokens: 600 }, el);
 }
-document.addEventListener('keydown',e=>{
-  if(e.key==='Enter' && document.activeElement?.id==='quick-q') quickAsk();
+document.addEventListener('keydown', e => {
+  if(e.key === 'Enter' && document.activeElement?.id === 'quick-q') quickAsk();
 });
 
-// ═══════════════════════════════════════
-// PROJECT MODES
-// ═══════════════════════════════════════
-function setProjectMode(mode,btn){
-  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+// ── PROJECT MODES ────────────────────────────────────────────────
+function setProjectMode(mode, btn) {
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('project-list-view').style.display=mode==='list'?'block':'none';
-  document.getElementById('project-mindmap-view').style.display=mode==='mindmap'?'block':'none';
-  document.getElementById('project-add-view').style.display=mode==='add'?'block':'none';
-  // Wait one frame so SVG is visible and has real clientWidth before rendering
-  if(mode==='mindmap') setTimeout(renderMindmap, 50);
+  document.getElementById('project-list-view').style.display  = mode==='list'    ? 'block':'none';
+  document.getElementById('project-mindmap-view').style.display = mode==='mindmap'? 'block':'none';
+  document.getElementById('project-add-view').style.display   = mode==='add'     ? 'block':'none';
+  if(mode === 'mindmap') setTimeout(renderMindmap, 50);
 }
 
-// ═══════════════════════════════════════
-// MINDMAP RENDERER
-// ═══════════════════════════════════════
-function renderMindmap(){
-  const text=document.getElementById('mindmap-text').value;
-  const lines=text.split('\n').filter(l=>l.trim());
-  const svg=document.getElementById('mindmap-svg');
-  // Force explicit size — clientWidth can be 0 if parent was just made visible
-  const container=svg.closest('.panel-body')||svg.parentElement;
-  const W=Math.max(container?container.getBoundingClientRect().width-36:0, window.innerWidth-120, 400);
-  const H=500;
-  svg.setAttribute('viewBox','0 0 '+W+' '+H);
-  svg.setAttribute('width',W);
-  svg.setAttribute('height',H);
-  const nodes=[];const stack=[];
-  lines.forEach(line=>{
-    const indent=line.match(/^(\s*)/)[1].length;
-    const level=Math.floor(indent/2);
-    const t=line.trim();
-    if(!t) return;
-    const node={text:t,level,children:[],id:nodes.length};
-    if(level===0){stack.length=0;nodes.push(node);stack[0]=node;}
-    else{const parent=stack[level-1];if(parent){parent.children.push(node);stack[level]=node;nodes.push(node);}}
+// ── MINDMAP — TAB KEY FIX ────────────────────────────────────────
+function handleMindmapTab(e) {
+  if(e.key !== 'Tab') return;
+  e.preventDefault();
+  const ta = e.target;
+  const start = ta.selectionStart;
+  const end = ta.selectionEnd;
+  ta.value = ta.value.substring(0, start) + '  ' + ta.value.substring(end);
+  ta.selectionStart = ta.selectionEnd = start + 2;
+  clearTimeout(window._mmTimer);
+  window._mmTimer = setTimeout(renderMindmap, 200);
+}
+
+// ── MINDMAP RENDERER ────────────────────────────────────────────
+function renderMindmap() {
+  const textarea = document.getElementById('mindmap-text');
+  const svg = document.getElementById('mindmap-svg');
+  if(!textarea || !svg) return;
+  const text = textarea.value.trim();
+  if(!text) { svg.innerHTML = ''; return; }
+
+  const container = svg.closest('.panel-body') || svg.parentElement;
+  const W = Math.max(container ? container.getBoundingClientRect().width - 36 : 0, window.innerWidth - 120, 400);
+  const H = 520;
+
+  const lines = text.split('\n');
+  const roots = [];
+  const stack = [];
+  lines.forEach(line => {
+    if(!line.trim()) return;
+    const indent = line.match(/^(\s*)/)[1].length;
+    const level = Math.floor(indent / 2);
+    const node = { text: line.trim(), level, children: [] };
+    stack[level] = node;
+    if(level === 0) roots.push(node);
+    else if(stack[level-1]) stack[level-1].children.push(node);
+    stack.splice(level + 1);
   });
-  const roots=nodes.filter(n=>n.level===0);
-  if(!roots.length){svg.innerHTML='';return;}
-  let svgContent='';
-  const colors=['#c8ff00','#fbbf24','#00e5cc','#8b5cf6','#ff5500','#ff3d7f','#38bdf8'];
-  function drawNode(node,x,y,px,py,ci,depth){
-    const col=colors[ci%colors.length];
-    const r=depth===0?40:depth===1?28:20;
-    const fs=depth===0?11:depth===1?10:9;
-    if(px!==null) svgContent+=`<line x1="${px}" y1="${py}" x2="${x}" y2="${y}" stroke="${col}" stroke-width="${depth===1?2:1}" stroke-opacity="0.4" stroke-dasharray="${depth>1?'4,4':''}"/>`;
-    svgContent+=`<circle cx="${x}" cy="${y}" r="${r}" fill="${col}18" stroke="${col}" stroke-width="${depth===0?2:1}"/>`;
-    const words=node.text.split(' ');const ls=[];let cur='';
-    words.forEach(w=>{if((cur+w).length>12){if(cur)ls.push(cur.trim());cur=w+' ';}else cur+=w+' ';});
-    if(cur.trim())ls.push(cur.trim());
-    ls.slice(0,2).forEach((l,i)=>{
-      const yo=(i-(Math.min(ls.length,2)-1)/2)*(fs+2);
-      svgContent+=`<text x="${x}" y="${y+yo+4}" text-anchor="middle" font-family="'Space Mono',monospace" font-size="${fs}" font-weight="700" fill="${col}">${l}</text>`;
+
+  if(!roots.length) { svg.innerHTML = ''; return; }
+
+  const colors = ['#c8ff00','#fbbf24','#00e5cc','#8b5cf6','#ff5500','#ff3d7f','#38bdf8','#00ff88'];
+  let pieces = ['<rect width="' + W + '" height="' + H + '" fill="#0e0e12" rx="4"/>'];
+
+  function wrapText(text, maxChars) {
+    const words = text.split(' ');
+    const ls = []; let cur = '';
+    words.forEach(w => {
+      if((cur + (cur?' ':'') + w).length > maxChars && cur) { ls.push(cur); cur = w; }
+      else cur += (cur?' ':'') + w;
     });
-    if(node.children.length){
-      const spread=depth===0?H*0.72:H*0.38/Math.max(1,node.children.length);
-      const sy=y-(node.children.length-1)*spread/2;
-      const cx2=x+(depth===0?140:108);
-      node.children.forEach((ch,i)=>drawNode(ch,cx2,sy+i*spread,x,y,ci+i+1,depth+1));
+    if(cur) ls.push(cur);
+    return ls.slice(0, 3);
+  }
+
+  function drawNode(node, x, y, px, py, ci, depth) {
+    const col = colors[ci % colors.length];
+    const r = depth===0?38:depth===1?26:18;
+    const fs = depth===0?10:depth===1?9:8;
+    if(px !== null) {
+      const dash = depth > 1 ? 'stroke-dasharray="5,4"' : '';
+      pieces.push('<line x1="' + px + '" y1="' + py + '" x2="' + x + '" y2="' + y + '" stroke="' + col + '" stroke-width="' + (depth===1?2:1) + '" stroke-opacity="0.5" ' + dash + '/>');
+    }
+    pieces.push('<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + col + '1a" stroke="' + col + '" stroke-width="' + (depth===0?2:1) + '"/>');
+    const tls = wrapText(node.text, depth===0?10:12);
+    const lineH = fs + 3;
+    tls.forEach((ln, i) => {
+      const ty = y - (tls.length * lineH)/2 + i*lineH + fs;
+      pieces.push('<text x="' + x + '" y="' + ty + '" text-anchor="middle" font-family="Space Mono,monospace" font-size="' + fs + '" font-weight="700" fill="' + col + '">' + ln + '</text>');
+    });
+    if(node.children.length) {
+      const childX = x + (depth===0?150:120);
+      const spread = Math.min(node.children.length * (depth===0?100:70), H * 0.8);
+      const spacing = spread / Math.max(node.children.length - 1, 1);
+      const startY = y - spread/2;
+      node.children.forEach((ch, i) => {
+        const cy = node.children.length === 1 ? y : startY + i * spacing;
+        drawNode(ch, childX, cy, x, y, ci+i+1, depth+1);
+      });
     }
   }
-  const spread=H/Math.max(roots.length+1,2);
-  roots.forEach((root,i)=>drawNode(root,80,(i+1)*spread,null,null,i*2,0));
-  svg.setAttribute('viewBox','0 0 '+W+' '+H);
-  svg.setAttribute('width',W);
-  svg.setAttribute('height',H);
-  svg.innerHTML=`<rect width="${W}" height="${H}" fill="#0e0e12"/>${svgContent}`;
-}
-function hexToRgb(h){const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return `${r},${g},${b}`;}
 
-// ═══════════════════════════════════════
-// AI AUTOCOMPLETE
-// ═══════════════════════════════════════
-let acTimer=null;
-function aiAutocomplete(el,targetId,ctx){
-  clearTimeout(acTimer);
-  const val=el.value.trim();
-  if(val.length<10){document.getElementById(targetId).innerHTML='Keep typing for AI suggestions...';return;}
-  document.getElementById(targetId).innerHTML='<span class="spinner"></span> AI thinking...';
-  acTimer=setTimeout(async()=>{
-    const prompts={
-      'project':`Malik is a 1st year EEE student. He's typing a project idea: "${val}". Give a one-sentence completion and suggest 3 related project ideas. Concise.`,
-      'project-desc':`Malik typed: "${val}". Expand with: components needed, skills learned, time estimate, one technical challenge. Under 90 words.`
-    };
-    const ans=await askClaude(prompts[ctx]||`Complete this for an EEE student: "${val}"`);
-    document.getElementById(targetId).innerHTML=ans.replace(/\n/g,'<br>');
-  },1200);
+  const rowH = H / (roots.length + 1);
+  roots.forEach((root, i) => drawNode(root, 80, (i+1)*rowH, null, null, i*3, 0));
+
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  svg.setAttribute('width', W);
+  svg.setAttribute('height', H);
+  svg.innerHTML = pieces.join('');
+}
+window.addEventListener('resize', () => {
+  const mv = document.getElementById('project-mindmap-view');
+  if(mv && mv.style.display !== 'none') renderMindmap();
+});
+
+// ── AI AUTOCOMPLETE ──────────────────────────────────────────────
+let _acTimer = null;
+function aiAutocomplete(el, targetId, ctx) {
+  clearTimeout(_acTimer);
+  const val = el.value.trim();
+  const out = document.getElementById(targetId);
+  if(!out) return;
+  if(val.length < 10) { out.innerHTML = 'Keep typing for AI suggestions...'; return; }
+  out.innerHTML = '<span class="spinner"></span> AI thinking...';
+  _acTimer = setTimeout(() => askAI('/api/ai/project-autocomplete', { text: val, context: ctx }, out), 1200);
 }
 
-let ntTimer=null;
-function notesAutocomplete(){
-  clearTimeout(ntTimer);
-  const val=document.getElementById('notes-area').value;
-  const lastLine=val.split('\n').filter(l=>l.trim()).pop()||'';
-  if(lastLine.length<15) return;
-  document.getElementById('notes-suggest').innerHTML='<span class="spinner"></span> Suggesting...';
-  ntTimer=setTimeout(async()=>{
-    const ans=await askClaude(`Malik is taking study notes. Continue his thought in 1-2 sentences naturally. Don't repeat what's written. Note: "${lastLine}"`,150);
-    document.getElementById('notes-suggest').innerHTML='→ '+ans;
-    window._lastSug=ans;
-  },1500);
+let _ntTimer = null;
+function notesAutocomplete() {
+  clearTimeout(_ntTimer);
+  const val = document.getElementById('notes-area').value;
+  const lastLine = val.split('\n').filter(l => l.trim()).pop() || '';
+  if(lastLine.length < 15) return;
+  const out = document.getElementById('notes-suggest');
+  out.innerHTML = '<span class="spinner"></span> Suggesting...';
+  _ntTimer = setTimeout(async () => {
+    const data = await api('POST', '/api/ai/notes-complete', { lastLine });
+    out.innerHTML = '→ ' + data.text;
+    out.className = 'ai-box';
+    window._lastSug = data.text;
+  }, 1500);
 }
-function acceptSuggestion(){
-  if(window._lastSug){
-    const ta=document.getElementById('notes-area');
-    ta.value+=' '+window._lastSug;
-    window._lastSug=null;
-    document.getElementById('notes-suggest').innerHTML='Suggestion accepted. Keep writing...';
+function acceptSuggestion() {
+  if(window._lastSug) {
+    const ta = document.getElementById('notes-area');
+    ta.value += ' ' + window._lastSug;
+    window._lastSug = null;
+    document.getElementById('notes-suggest').innerHTML = 'Suggestion accepted. Keep writing...';
   }
 }
-async function expandNotes(){
-  const val=document.getElementById('notes-area').value.trim();
-  if(!val) return showNotif('Write some notes first');
-  document.getElementById('notes-suggest').innerHTML='<span class="spinner"></span> Expanding...';
-  const ans=await askClaude(`Malik wrote these study notes: "${val}". Add 3-4 key points he might have missed, a key formula or definition, and a real-world application. Format as bullet points.`,400);
-  const ns=document.getElementById('notes-suggest');
-  ns.innerHTML=ans.replace(/\n/g,'<br>');
-  ns.className='ai-box';
+async function expandNotes() {
+  const notes = document.getElementById('notes-area').value.trim();
+  if(!notes) { showNotif('Write some notes first'); return; }
+  await askAI('/api/ai/notes-expand', { notes }, document.getElementById('notes-suggest'));
 }
 
-// ═══════════════════════════════════════
-// SAVE / RENDER IDEAS
-// ═══════════════════════════════════════
-const ideas=JSON.parse(localStorage.getItem('malik-ideas')||'[]');
-function saveIdea(){
-  const title=document.getElementById('idea-title').value.trim();
-  const desc=document.getElementById('idea-desc').value.trim();
-  if(!title) return showNotif('Add a title first');
-  ideas.push({title,desc,cat:document.getElementById('idea-cat').value,priority:document.getElementById('idea-priority').value,date:new Date().toLocaleDateString('en-GB')});
-  localStorage.setItem('malik-ideas',JSON.stringify(ideas));
-  renderIdeas();
-  document.getElementById('idea-title').value='';
-  document.getElementById('idea-desc').value='';
-  showNotif('Idea captured: '+title);
-  updateStats();
+// ── IDEAS ────────────────────────────────────────────────────────
+let ideas = [];
+
+async function loadIdeas() {
+  try {
+    ideas = await api('GET', '/api/ideas');
+    renderIdeas();
+    updateStats();
+  } catch(e) {
+    ideas = JSON.parse(localStorage.getItem('malik-ideas') || '[]');
+    renderIdeas();
+  }
 }
-async function aiExpandIdea(){
-  const title=document.getElementById('idea-title').value.trim();
-  const desc=document.getElementById('idea-desc').value.trim();
-  if(!title) return showNotif('Add a title first');
-  const el=document.getElementById('idea-expand-result');
-  el.style.display='block';
-  el.innerHTML='<span class="spinner"></span> AI expanding your idea...';
-  const ans=await askClaude(`Malik is a 1st year EEE student at Swansea. Project idea: "${title}". ${desc?'Description: '+desc:''}. Expand with: 1) What makes it interesting for EEE 2) Components/tech stack 3) 5-step build plan 4) Skills gained 5) How to make it portfolio-worthy. Practical and motivating.`,600);
-  el.innerHTML=ans.replace(/\n/g,'<br>');
+
+async function saveIdea() {
+  const title = document.getElementById('idea-title').value.trim();
+  const desc  = document.getElementById('idea-desc').value.trim();
+  if(!title) { showNotif('Add a title first'); return; }
+  try {
+    const idea = await api('POST', '/api/ideas', {
+      title, description: desc,
+      category: document.getElementById('idea-cat').value,
+      priority: document.getElementById('idea-priority').value
+    });
+    ideas.unshift(idea);
+    document.getElementById('idea-title').value = '';
+    document.getElementById('idea-desc').value = '';
+    document.getElementById('idea-expand-result').style.display = 'none';
+    renderIdeas();
+    showNotif('Idea captured: ' + title);
+    updateStats();
+  } catch(e) { showNotif('Save failed: ' + e.message, 'error'); }
 }
-function renderIdeas(){
-  const c=document.getElementById('ideas-container');
-  if(!ideas.length){c.innerHTML='<div style="color:var(--muted2);font-size:12px;text-align:center;padding:20px">No ideas yet</div>';return;}
-  c.innerHTML=ideas.map((idea,i)=>`
+
+async function aiExpandIdea() {
+  const title = document.getElementById('idea-title').value.trim();
+  const desc  = document.getElementById('idea-desc').value.trim();
+  if(!title) { showNotif('Add a title first'); return; }
+  const el = document.getElementById('idea-expand-result');
+  el.style.display = 'block';
+  await askAI('/api/ai/expand-idea', { title, description: desc }, el);
+}
+
+function renderIdeas() {
+  const c = document.getElementById('ideas-container');
+  if(!ideas.length) {
+    c.innerHTML = '<div style="color:var(--muted2);font-size:12px;text-align:center;padding:20px">No ideas yet — use ADD IDEA</div>';
+    return;
+  }
+  c.innerHTML = ideas.map((idea, i) => `
     <div class="idea-item">
       <div style="flex:1">
         <strong>${idea.title}</strong>
-        ${idea.desc?`<div style="margin-top:3px;color:var(--muted)">${idea.desc}</div>`:''}
-        <div class="idea-meta">${idea.cat} · ${idea.priority} priority · ${idea.date}</div>
+        ${idea.description ? '<div style="margin-top:3px;color:var(--muted);font-size:11px">' + idea.description + '</div>' : ''}
+        <div class="idea-meta">${idea.category || ''} · ${idea.priority || ''} · ${new Date(idea.created_at||Date.now()).toLocaleDateString('en-GB')}</div>
       </div>
-      <div><button class="icon-btn" onclick="deleteIdea(${i})">✕</button></div>
+      <div><button class="icon-btn" onclick="deleteIdea(${idea.id||i})">✕</button></div>
     </div>`).join('');
 }
-function deleteIdea(i){ideas.splice(i,1);localStorage.setItem('malik-ideas',JSON.stringify(ideas));renderIdeas();updateStats();}
-renderIdeas();
 
-// ═══════════════════════════════════════
-// ML PATHWAY
-// ═══════════════════════════════════════
-const mlPath=[
-  {n:'1',t:'Linear Algebra',d:'3B1B Essence series → MIT 18.06 (Gilbert Strang). Foundation for everything.',dur:'Weeks 1–6'},
-  {n:'2',t:'Calculus & Probability',d:'MIT 18.02 Multivariate + MIT 6.041 Probability. The language of ML.',dur:'Weeks 7–10'},
-  {n:'3',t:'Andrew Ng ML Specialisation',d:'Coursera (audit free). All 3 courses, every assignment. No skipping.',dur:'Weeks 11–18'},
-  {n:'4',t:'MIT 6.034 AI (OCW)',d:'Classical AI + neural nets from scratch. Complements Ng perfectly.',dur:'Weeks 19–26'},
-  {n:'5',t:'Build an ML Project',d:'Train a model on signal processing data. EEE crossover. Ship to GitHub.',dur:'Ongoing'},
+async function deleteIdea(id) {
+  try {
+    await api('DELETE', '/api/ideas/' + id);
+    ideas = ideas.filter(i => i.id !== id);
+    renderIdeas();
+    updateStats();
+  } catch(e) { showNotif('Delete failed', 'error'); }
+}
+
+loadIdeas();
+
+// ── ML PATHWAY ───────────────────────────────────────────────────
+const mlPath = [
+  {n:'1',t:'Linear Algebra',            d:'3B1B Essence series → MIT 18.06 (Gilbert Strang). Foundation for everything.',dur:'Weeks 1–6'},
+  {n:'2',t:'Calculus & Probability',    d:'MIT 18.02 + MIT 6.041. The language of ML.',                                  dur:'Weeks 7–10'},
+  {n:'3',t:'Andrew Ng ML Specialisation',d:'Coursera audit free. All 3 courses, every assignment. No skipping.',        dur:'Weeks 11–18'},
+  {n:'4',t:'MIT 6.034 AI (OCW)',        d:'Classical AI + neural nets from scratch. Complements Ng perfectly.',          dur:'Weeks 19–26'},
+  {n:'5',t:'Build an ML Project',       d:'Train a model on signal processing data. EEE crossover. Ship to GitHub.',     dur:'Ongoing'},
 ];
-document.getElementById('ml-pathway').innerHTML=mlPath.map(s=>`
+const mlEl = document.getElementById('ml-pathway');
+if(mlEl) mlEl.innerHTML = mlPath.map(s => `
   <div style="display:grid;grid-template-columns:28px 1fr auto;gap:12px;padding:12px 14px;background:var(--s2);border:1px solid var(--border);border-left:2px solid var(--lime)">
     <div style="font-family:var(--display);font-size:22px;color:var(--lime)">${s.n}</div>
     <div><div style="font-size:13px;font-weight:700;margin-bottom:2px">${s.t}</div><div style="font-size:11px;color:var(--muted)">${s.d}</div></div>
     <div style="font-size:10px;color:var(--gold);white-space:nowrap;padding-top:2px">${s.dur}</div>
   </div>`).join('');
 
-// ═══════════════════════════════════════
-// STUDY EXPLAIN
-// ═══════════════════════════════════════
-async function studyExplain(){
-  const q=document.getElementById('study-q').value.trim();
-  const level=document.getElementById('study-level').value;
-  if(!q) return;
-  const el=document.getElementById('study-answer');
-  el.innerHTML='<span class="spinner"></span> Loading explanation...';
-  el.className='ai-box loading';
-  const lm={'ELI5':'explain like I am 12, using everyday analogies','Student':'explain at university level with mathematical intuition','Deep Dive':'give a rigorous deep technical explanation with key equations'};
-  const ans=await askClaude(`Malik is a 1st year EEE student. Please ${lm[level]}: ${q}. Connect it to electrical engineering where possible.`,700);
-  el.innerHTML=ans.replace(/\n/g,'<br>');
-  el.className='ai-box';
+// ── STUDY EXPLAIN ────────────────────────────────────────────────
+async function studyExplain() {
+  const concept = document.getElementById('study-q').value.trim();
+  const level = document.getElementById('study-level').value;
+  if(!concept) { showNotif('Enter a concept first'); return; }
+  await askAI('/api/ai/explain', { concept, level }, document.getElementById('study-answer'));
 }
-document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.activeElement?.id==='study-q')studyExplain();});
-
-// ═══════════════════════════════════════
-// QURAN COUNTERS
-// ═══════════════════════════════════════
-const qState=JSON.parse(localStorage.getItem('malik-quran')||'{"sabaq":0,"sabqi":0,"manzil":0,"tilawah":0}');
-function changeCount(key,delta){
-  qState[key]=Math.max(0,(qState[key]||0)+delta);
-  document.getElementById(key+'-count').textContent=qState[key];
-  localStorage.setItem('malik-quran',JSON.stringify(qState));
-}
-['sabaq','sabqi','manzil','tilawah'].forEach(k=>{
-  const el=document.getElementById(k+'-count');
-  if(el) el.textContent=qState[k]||0;
+document.addEventListener('keydown', e => {
+  if(e.key === 'Enter' && document.activeElement?.id === 'study-q') studyExplain();
 });
 
-// ═══════════════════════════════════════
-// GYM
-// ═══════════════════════════════════════
-const gymDays={
-  1:{title:'DAY 1 — CHEST / BACK / BICEPS',ex:[
-    ['Bench Press','4','8','30kg'],['Pendlay Row','4','12','Bar'],['Incline DB Press','4','12','7.5kg'],
-    ['Lat Pulldown','3','12','25kg'],['Seated Cable Row','3','12','—'],['DB Curls','4','8','10kg']
+// ── QURAN ────────────────────────────────────────────────────────
+let qState = { sabaq:0, sabqi:0, manzil:0, tilawah:0 };
+
+async function loadQuran() {
+  try {
+    qState = await api('GET', '/api/quran/today');
+  } catch(e) {
+    qState = JSON.parse(localStorage.getItem('malik-quran') || '{"sabaq":0,"sabqi":0,"manzil":0,"tilawah":0}');
+  }
+  ['sabaq','sabqi','manzil','tilawah'].forEach(k => {
+    const el = document.getElementById(k + '-count');
+    if(el) el.textContent = qState[k] || 0;
+  });
+}
+
+async function changeCount(key, delta) {
+  qState[key] = Math.max(0, (qState[key] || 0) + delta);
+  const el = document.getElementById(key + '-count');
+  if(el) el.textContent = qState[key];
+  try {
+    await api('POST', '/api/quran/today', qState);
+  } catch(e) {
+    localStorage.setItem('malik-quran', JSON.stringify(qState));
+  }
+}
+loadQuran();
+
+// ── GYM ──────────────────────────────────────────────────────────
+const gymDays = {
+  1:{title:'DAY 1 — CHEST / BACK / BICEPS', ex:[
+    ['Bench Press','4','8','30kg'],['Pendlay Row','4','12','Bar'],
+    ['Incline DB Press','4','12','7.5kg'],['Lat Pulldown','3','12','25kg'],
+    ['Seated Cable Row','3','12','—'],['DB Curls','4','8','10kg']
   ]},
-  2:{title:'DAY 2 — SHOULDERS / LEGS / TRICEPS',ex:[
-    ['Barbell Squat','4','8','—'],['Seated DB Press','4','12','—'],['Romanian Deadlift','4','12','—'],
-    ['Lateral Raise','4','12','—'],['DB Split Squat','3','20','—'],['DB Skullcrusher','4','10','—']
+  2:{title:'DAY 2 — SHOULDERS / LEGS / TRICEPS', ex:[
+    ['Barbell Squat','4','8','—'],['Seated DB Press','4','12','—'],
+    ['Romanian Deadlift','4','12','—'],['Lateral Raise','4','12','—'],
+    ['DB Split Squat','3','20','—'],['DB Skullcrusher','4','10','—']
   ]},
-  3:{title:'DAY 3 — CHEST / BACK / BICEPS',ex:[
-    ['Pull Ups','4','8','BW'],['Incline Bench Press','4','12','—'],['Chest Supported Row','4','12','—'],
-    ['Weighted Dip','4','12','BW'],['Machine Press/Fly','3','12','—'],['Incline DB Curl','4','12','—']
+  3:{title:'DAY 3 — CHEST / BACK / BICEPS', ex:[
+    ['Pull Ups','4','8','BW'],['Incline Bench Press','4','12','—'],
+    ['Chest Supported Row','4','12','—'],['Weighted Dip','4','12','BW'],
+    ['Machine Press/Fly','3','12','—'],['Incline DB Curl','4','12','—']
   ]},
-  4:{title:'DAY 4 — SHOULDERS / LEGS / TRICEPS',ex:[
-    ['Standing OHP','4','8','—'],['Trap Bar Deadlift','4','12','—'],['Lateral Raise Var.','4','10','—'],
-    ['Leg Press','4','12','—'],['Lying Ham Curl','3','12','—'],['Tricep Pushdown','4','12','—']
+  4:{title:'DAY 4 — SHOULDERS / LEGS / TRICEPS', ex:[
+    ['Standing OHP','4','8','—'],['Trap Bar Deadlift','4','12','—'],
+    ['Lateral Raise Var.','4','10','—'],['Leg Press','4','12','—'],
+    ['Lying Ham Curl','3','12','—'],['Tricep Pushdown','4','12','—']
   ]}
 };
-let curGymDay=1;
-function showGymDay(d){
-  curGymDay=d;
-  const day=gymDays[d];
-  document.getElementById('gym-day-title').textContent=day.title;
-  const sw=JSON.parse(localStorage.getItem('malik-gym-weights')||'{}');
-  document.getElementById('gym-table').innerHTML=`
-    <tr><th>Exercise</th><th>Sets</th><th>Reps</th><th>Target</th><th>Actual</th></tr>
-    ${day.ex.map((ex,i)=>`<tr>
-      <td>${ex[0]}</td><td>${ex[1]}</td><td>${ex[2]}</td>
-      <td style="color:var(--lime);font-family:var(--mono)">${ex[3]}</td>
-      <td><input type="text" class="weight-input" placeholder="${ex[3]}" value="${sw[`d${d}-${i}`]||''}" onchange="saveWeight(${d},${i},this.value)"></td>
-    </tr>`).join('')}`;
-  document.getElementById('gym-advice').style.display='none';
-}
-function saveWeight(d,i,val){
-  const w=JSON.parse(localStorage.getItem('malik-gym-weights')||'{}');
-  w[`d${d}-${i}`]=val;localStorage.setItem('malik-gym-weights',JSON.stringify(w));
-}
-function logGymSession(){
-  const log=JSON.parse(localStorage.getItem('malik-gym-log')||'[]');
-  log.unshift({day:curGymDay,title:gymDays[curGymDay].title,date:new Date().toLocaleDateString('en-GB'),time:new Date().toLocaleTimeString('en-GB')});
-  localStorage.setItem('malik-gym-log',JSON.stringify(log.slice(0,20)));
-  renderGymLog();showNotif('Session logged: '+gymDays[curGymDay].title);
-}
-async function aiGymAdvice(){
-  const el=document.getElementById('gym-advice');
-  el.style.display='block';
-  el.innerHTML='<span class="spinner"></span> Getting coach advice...';
-  el.className='ai-box loading';
-  const ans=await askClaude(`Malik is a beginner at the gym doing Day ${curGymDay}: ${gymDays[curGymDay].title}. Exercises: ${gymDays[curGymDay].ex.map(e=>e[0]).join(', ')}. Give him 3 quick form tips for the most important exercises, one progressive overload tip, and one recovery tip. Under 150 words.`,300);
-  el.innerHTML=ans.replace(/\n/g,'<br>');
-  el.className='ai-box';
-}
-function renderGymLog(){
-  const log=JSON.parse(localStorage.getItem('malik-gym-log')||'[]');
-  const c=document.getElementById('gym-log');
-  if(!log.length){c.innerHTML='<div style="color:var(--muted2);font-size:12px">No sessions logged yet.</div>';return;}
-  c.innerHTML=log.map(l=>`<div style="padding:9px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between"><div style="font-size:12px;font-weight:700">${l.title}</div><div style="font-size:10px;color:var(--muted)">${l.date} ${l.time}</div></div>`).join('');
-}
-showGymDay(1);renderGymLog();
+let curGymDay = 1;
+let gymWeights = {};
 
-// ═══════════════════════════════════════
-// CAREERS
-// ═══════════════════════════════════════
-const careerData={
-  embedded:{title:'Embedded Systems Engineer',icon:'🔧',color:'var(--teal)',
-    overview:'Embedded systems engineers design and program microcontrollers, develop firmware, and build the software that runs on hardware. One of the most in-demand EEE specialisations.',
-    salaryUK:'£35k–£85k',
-    companies:['ARM','STMicroelectronics','NXP','Qualcomm','BAE Systems','Dyson','Raspberry Pi Foundation'],
-    skills:['C/C++ for embedded','RTOS (FreeRTOS)','ARM Cortex-M','SPI/I2C/UART','JTAG debugging','PCB design (KiCad)','Git'],
-    roadmap:[
-      {t:'Master C Programming',d:'Pointers, memory management, bit manipulation. Foundation of everything embedded.'},
-      {t:'Get an STM32 Board',d:'£10 STM32F4 Discovery. Write bare-metal code without Arduino libraries.'},
-      {t:'Learn FreeRTOS',d:'Task scheduling, semaphores, queues. Every real product uses an RTOS.'},
-      {t:'Study Computer Architecture',d:'How CPUs work at register level. ARM’s free Cortex-M programming guide.'},
-      {t:'Build 3 Portfolio Projects',d:'A driver library, an IoT sensor node, a motor controller. Ship all to GitHub.'},
-      {t:'Contribute to Open Source',d:'zephyr-project or FreeRTOS on GitHub. Massive CV differentiator.'}
-    ],
-    resources:[
-      {type:'Book',name:'Programming Embedded Systems',desc:'Michael Barr & Anthony Massa — the bible'},
-      {type:'Course',name:'FastBit Embedded C (Udemy)',desc:'Most practical embedded C course'},
-      {type:'Course',name:'Arm Education Hub',desc:'Free ARM Cortex-M courses from ARM itself'},
-      {type:'YouTube',name:'Low Level Learning',desc:'Best embedded systems YouTube channel'},
-      {type:'Tool',name:'STM32CubeIDE',desc:'Free official IDE for STM32 development'},
-      {type:'Tool',name:'KiCad 7',desc:'Free professional PCB design software'}
-    ]
-  },
-  'ai-ml':{title:'AI/ML Engineer (EEE Focus)',icon:'🤖',color:'var(--violet)',
-    overview:'Combining electrical engineering with machine learning — signal processing AI, edge ML on embedded systems, neural networks for hardware control.',
-    salaryUK:'£50k–£150k+',
-    companies:['DeepMind','Waymo','Tesla','ARM','Graphcore','Amazon','Microsoft'],
-    skills:['Python','PyTorch/TensorFlow','Linear Algebra','Signal Processing','Edge ML (TFLite)','Statistics','Git'],
-    roadmap:[
-      {t:'Linear Algebra First',d:'3B1B Essence series then MIT 18.06. Without this, ML is a black box forever.'},
-      {t:'Python + NumPy/Pandas',d:'Scientific Python stack. Learn vectorisation, not for loops.'},
-      {t:'Andrew Ng ML Course',d:'Coursera, audit free. Complete all assignments. Non-negotiable.'},
-      {t:'PyTorch from Scratch',d:'Build a neural network without ML libraries. Then use PyTorch.'},
-      {t:'EEE + ML Crossover Project',d:'Train a model on signal dataset (ECG, audio, vibration). Differentiates you.'},
-      {t:'Edge ML Deployment',d:'Run a model on STM32. TensorFlow Lite for Microcontrollers.'}
-    ],
-    resources:[
-      {type:'Course',name:'Andrew Ng ML Specialisation',desc:'Coursera — the definitive starting point'},
-      {type:'Course',name:'MIT 6.034 AI (OCW)',desc:'Free — classical AI theory from MIT'},
-      {type:'Book',name:'Deep Learning (Goodfellow)',desc:'The textbook. Free at deeplearningbook.org'},
-      {type:'YouTube',name:'3Blue1Brown',desc:'Neural Networks series — unmatched intuition'},
-      {type:'YouTube',name:'Andrej Karpathy',desc:'Building GPT from scratch'},
-      {type:'Tool',name:'PyTorch',desc:'Industry standard deep learning framework'}
-    ]
-  },
-  power:{title:'Power & Energy Engineer',icon:'⚡',color:'var(--gold)',
-    overview:'Designing power systems, grid infrastructure, renewable energy conversion, and power electronics. Huge demand with the energy transition.',
-    salaryUK:'£32k–£75k',
-    companies:['National Grid','Siemens Energy','GE Renewable','SSE','Ørsted','Rolls-Royce','ABB'],
-    skills:['Power electronics','MATLAB/Simulink','Grid systems','Transformers','SCADA','Renewables','Power factor correction'],
-    roadmap:[
-      {t:'Master Circuit Theory',d:'Thévenin/Norton, AC analysis, power factor. Your uni modules + Hayt textbook.'},
-      {t:'Learn MATLAB/Simulink',d:'Industry standard for power systems simulation. Free with uni license.'},
-      {t:'Power Electronics Project',d:'Build a DC-DC converter (buck/boost). Understand switching regulators deeply.'},
-      {t:'Get IEEE Membership',d:'Free student membership. Access to papers, local events, networking.'},
-      {t:'Target Summer Internship',d:'National Grid, SSE, Siemens all have strong grad schemes. Apply Year 2.'}
-    ],
-    resources:[
-      {type:'Book',name:'Power Electronics (Mohan)',desc:'Ned Mohan — the standard textbook'},
-      {type:'Course',name:'Power Systems (edX)',desc:'MIT power systems course — free to audit'},
-      {type:'YouTube',name:'The Engineering Mindset',desc:'Excellent power systems explanations'},
-      {type:'Tool',name:'MATLAB/Simulink',desc:'Free with your Swansea University license'},
-      {type:'Resource',name:'IEEE Xplore',desc:'Free access to papers via uni library'}
-    ]
-  },
-  rf:{title:'RF & Telecommunications Engineer',icon:'📡',color:'var(--green)',
-    overview:'Designing wireless communication systems, antennas, RF circuits for 5G/6G, satellite, and radar. Highly specialised and well paid.',
-    salaryUK:'£38k–£90k',
-    companies:['Ericsson','Nokia','Vodafone','BT','GCHQ','Leonardo','Raytheon'],
-    skills:['RF circuit design','Antenna theory','ADS/CST simulation','Python','Signal processing','MATLAB','VNA operation'],
-    roadmap:[
-      {t:'Strong EM Theory',d:'Maxwell’s equations, transmission lines, Smith chart. Your uni syllabus is key.'},
-      {t:'Learn RF Simulation',d:'CST Studio (free student) or ADS. Simulate a patch antenna.'},
-      {t:'Build an SDR Project',d:'£20 RTL-SDR dongle. Receive aircraft signals, decode FM radio.'},
-      {t:'Study 5G NR Standard',d:'3GPP free specs + Sharetechnote.com. Shows employers you know current tech.'}
-    ],
-    resources:[
-      {type:'Book',name:'Pozar Microwave Engineering',desc:'The RF bible — use with your uni course'},
-      {type:'Tool',name:'RTL-SDR',desc:'£20 software defined radio — hands-on RF learning'},
-      {type:'YouTube',name:'W2AEW',desc:'Best RF fundamentals YouTube channel'},
-      {type:'Resource',name:'Sharetechnote',desc:'5G/LTE technical reference — incredibly detailed'}
-    ]
-  },
-  vlsi:{title:'VLSI & Semiconductor Design',icon:'🔬',color:'var(--orange)',
-    overview:'Designing the chips that power everything. Extremely specialised, highly paid, and there’s a global shortage of talent.',
-    salaryUK:'£45k–£120k',
-    companies:['ARM','Intel','TSMC','Imagination Technologies','Graphcore','Qualcomm','Analog Devices'],
-    skills:['Verilog/VHDL','FPGA','CMOS design','Cadence/Synopsys','SPICE simulation','Digital logic','Timing analysis'],
-    roadmap:[
-      {t:'Master Digital Logic',d:'Boolean algebra, flip-flops, FSMs. Your Year 1 digital electronics module.'},
-      {t:'Learn Verilog',d:'HDL for hardware description. Free: nandland.com + iverilog simulator.'},
-      {t:'Get an FPGA',d:'£30 Arty A7 or Basys 3. Implement a CPU from scratch on it.'},
-      {t:'Study CMOS Fundamentals',d:'Razavi’s Design of Analog CMOS ICs — free online first edition.'}
-    ],
-    resources:[
-      {type:'Book',name:'Verilog HDL (Palnitkar)',desc:'Best Verilog textbook for beginners'},
-      {type:'Course',name:'nandland.com',desc:'Free FPGA/Verilog tutorials — excellent quality'},
-      {type:'Tool',name:'iverilog + GTKWave',desc:'Free Verilog simulation + waveform viewer'},
-      {type:'YouTube',name:'FPGA4Fun',desc:'Practical FPGA project tutorials'}
-    ]
-  },
-  control:{title:'Control Systems Engineer',icon:'🎛️',color:'var(--red)',
-    overview:'Designing systems that control machines, robots, aircraft, and industrial processes. Core EEE discipline underpinning aerospace, robotics, and manufacturing.',
-    salaryUK:'£35k–£80k',
-    companies:['Airbus','BAE Systems','Rolls-Royce','ABB','FANUC','Boston Dynamics','SpaceX'],
-    skills:['Control theory','MATLAB/Simulink','PID tuning','State space','Python','ROS (robotics)','Laplace transforms'],
-    roadmap:[
-      {t:'Master Laplace Transforms',d:'Foundation of control theory. Your uni maths modules cover this.'},
-      {t:'Build a PID Controller',d:'Balance a robot arm or control temperature. Implement on Arduino.'},
-      {t:'Learn MATLAB/Simulink',d:'Control Systems Toolbox — industry standard for control design.'},
-      {t:'Study Modern Control',d:'State space, LQR, Kalman filter. Brian Douglas YouTube series.'}
-    ],
-    resources:[
-      {type:'YouTube',name:'Brian Douglas',desc:'Best control systems YouTube series — crystal clear'},
-      {type:'Book',name:'Ogata Modern Control Engineering',desc:'The standard university textbook'},
-      {type:'Tool',name:'MATLAB Control Systems Toolbox',desc:'Free with your Swansea uni license'},
-      {type:'Course',name:'MIT 6.003 (OCW)',desc:'MIT signals and systems — free, rigorous'}
-    ]
-  },
-  photonics:{title:'Photonics & Optical Engineer',icon:'💡',color:'var(--sky)',
-    overview:'Working with light-based technologies — lasers, fibre optics, LiDAR, quantum photonics. Niche but growing fast with autonomous vehicles and quantum computing.',
-    salaryUK:'£35k–£85k',
-    companies:['II-VI','Coherent','Lumentum','Leonardo','BAE Systems','Huawei Research','Google Quantum AI'],
-    skills:['Photonics','Optics','COMSOL','Fibre optics','Laser systems','Python','Signal processing'],
-    roadmap:[
-      {t:'Study Electromagnetic Waves',d:'Maxwell’s equations, wave optics, polarisation. Your EM module is the foundation.'},
-      {t:'Learn COMSOL Multiphysics',d:'Free student trial. Simulate optical waveguides and photonic structures.'},
-      {t:'Fibre Optics Project',d:'Buy a fibre optic kit (£30) and measure attenuation, bending loss.'}
-    ],
-    resources:[
-      {type:'Book',name:'Saleh & Teich Photonics',desc:'The photonics textbook — comprehensive'},
-      {type:'YouTube',name:'Prof. David Miller (Stanford)',desc:'Quantum mechanics and photonics lectures'},
-      {type:'Tool',name:'COMSOL',desc:'Free student trial for photonics simulation'}
-    ]
-  },
-  quant:{title:'Quantitative Finance / EE to Finance',icon:'📊',color:'var(--gold)',
-    overview:'Using signal processing, maths, and systems thinking from EEE to analyse markets, build trading algorithms, and work in quantitative research. Highest paying adjacent career.',
-    salaryUK:'£60k–£200k+',
-    companies:['Jane Street','Citadel','Two Sigma','Goldman Sachs','Renaissance Technologies','Man Group','Marshall Wace'],
-    skills:['Python','Statistics','Signal processing','C++','Stochastic calculus','Linear algebra','Time series analysis'],
-    roadmap:[
-      {t:'Master Probability & Statistics',d:'Your EEE signals background is a huge advantage. MIT 6.041 is perfect.'},
-      {t:'Learn Python for Finance',d:'pandas, numpy, matplotlib, yfinance. Build a backtesting framework.'},
-      {t:'Study Options Pricing',d:'Black-Scholes model. You already have the maths from EEE.'},
-      {t:'Project Euler + Leetcode',d:'Quant firms use competitive programming interviews. Practice daily.'},
-      {t:'Target Spring Weeks',d:'Jane Street, Goldman, Citadel all have first-year spring insight programmes.'}
-    ],
-    resources:[
-      {type:'Book',name:'Options Futures & Derivatives (Hull)',desc:'The quant finance bible'},
-      {type:'YouTube',name:'QuantPy',desc:'Python for quantitative finance tutorials'},
-      {type:'Resource',name:'Kaggle Jane Street Competition',desc:'Real trading data + ML challenge'}
-    ]
+async function loadGymData() {
+  try {
+    gymWeights = await api('GET', '/api/gym/weights');
+  } catch(e) {
+    gymWeights = JSON.parse(localStorage.getItem('malik-gym-weights') || '{}');
   }
+  showGymDay(1);
+  await loadGymLog();
+  populateChartExerciseSelect();
+}
+
+function showGymDay(d) {
+  curGymDay = d;
+  const day = gymDays[d];
+  document.getElementById('gym-day-title').textContent = day.title;
+  const adv = document.getElementById('gym-advice');
+  adv.style.display = 'none';
+  adv.className = 'ai-box';
+  document.getElementById('gym-table').innerHTML =
+    '<tr><th>Exercise</th><th>Sets</th><th>Reps</th><th>Target</th><th>Actual</th></tr>' +
+    day.ex.map((ex, i) =>
+      '<tr><td>' + ex[0] + '</td><td>' + ex[1] + '</td><td>' + ex[2] + '</td>' +
+      '<td style="color:var(--lime);font-family:var(--mono)">' + ex[3] + '</td>' +
+      '<td><input type="text" class="weight-input" placeholder="' + ex[3] + '" ' +
+      'value="' + (gymWeights['d'+d+'-'+i] || '') + '" ' +
+      'onchange="saveWeight(' + d + ',' + i + ',this.value)"></td></tr>'
+    ).join('');
+}
+
+async function saveWeight(d, i, weight) {
+  gymWeights['d'+d+'-'+i] = weight;
+  try {
+    await api('POST', '/api/gym/weights', { dayNum: d, exerciseIdx: i, weight });
+  } catch(e) {
+    localStorage.setItem('malik-gym-weights', JSON.stringify(gymWeights));
+  }
+}
+
+async function logGymSession() {
+  try {
+    await api('POST', '/api/gym/sessions', {
+      dayNum: curGymDay,
+      dayTitle: gymDays[curGymDay].title,
+      weights: gymWeights
+    });
+    showNotif('Session logged: ' + gymDays[curGymDay].title);
+    await loadGymLog();
+  } catch(e) { showNotif('Log failed: ' + e.message, 'error'); }
+}
+
+async function aiGymAdvice() {
+  const el = document.getElementById('gym-advice');
+  el.style.display = 'block';
+  await askAI('/api/ai/gym-advice', {
+    dayNum: curGymDay,
+    dayTitle: gymDays[curGymDay].title,
+    exercises: gymDays[curGymDay].ex.map(e => e[0])
+  }, el);
+}
+
+async function loadGymLog() {
+  try {
+    const sessions = await api('GET', '/api/gym/sessions');
+    const c = document.getElementById('gym-log');
+    if(!sessions.length) {
+      c.innerHTML = '<div style="color:var(--muted2);font-size:12px">No sessions logged yet.</div>';
+      return;
+    }
+    c.innerHTML = sessions.map(s =>
+      '<div style="padding:9px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">' +
+      '<div style="font-size:12px;font-weight:700">' + s.day_title + '</div>' +
+      '<div style="font-size:10px;color:var(--muted)">' + new Date(s.logged_at).toLocaleString('en-GB') + '</div>' +
+      '</div>'
+    ).join('');
+  } catch(e) {
+    document.getElementById('gym-log').innerHTML = '<div style="color:var(--muted2);font-size:12px">Could not load sessions.</div>';
+  }
+}
+
+// ── GYM PROGRESS CHART ───────────────────────────────────────────
+function populateChartExerciseSelect() {
+  const sel = document.getElementById('chart-exercise');
+  if(!sel) return;
+  const opts = [];
+  Object.entries(gymDays).forEach(([d, day]) => {
+    day.ex.forEach((ex, i) => {
+      opts.push('<option value="' + d + '-' + i + '">' + 'D' + d + ': ' + ex[0] + '</option>');
+    });
+  });
+  sel.innerHTML = opts.join('');
+}
+
+async function renderProgressChart() {
+  const sel = document.getElementById('chart-exercise');
+  if(!sel) return;
+  const [d, i] = sel.value.split('-');
+  const canvas = document.getElementById('progress-chart');
+  const emptyEl = document.getElementById('chart-empty');
+  try {
+    const data = await api('GET', '/api/gym/progress/' + d + '/' + i);
+    if(!data.length) {
+      emptyEl.style.display = 'block';
+      return;
+    }
+    emptyEl.style.display = 'none';
+    const ctx = canvas.getContext('2d');
+    const W = canvas.offsetWidth;
+    const H = 200;
+    canvas.width = W;
+    canvas.height = H;
+    ctx.fillStyle = '#0e0e12';
+    ctx.fillRect(0, 0, W, H);
+
+    const weights = data.map(r => parseFloat(r.weight) || 0);
+    const labels  = data.map(r => new Date(r.logged_at).toLocaleDateString('en-GB',{day:'numeric',month:'short'}));
+    const maxW = Math.max(...weights) * 1.1 || 1;
+    const minW = Math.min(...weights) * 0.9;
+    const pad = { t:20, r:20, b:40, l:40 };
+    const chartW = W - pad.l - pad.r;
+    const chartH = H - pad.t - pad.b;
+
+    // Grid lines
+    ctx.strokeStyle = '#1e1e26';
+    ctx.lineWidth = 1;
+    for(let g=0;g<=4;g++) {
+      const y = pad.t + chartH * (g/4);
+      ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
+      ctx.fillStyle = '#5a5a72';
+      ctx.font = '9px Space Mono, monospace';
+      ctx.textAlign = 'right';
+      ctx.fillText((maxW - (maxW-minW)*(g/4)).toFixed(1)+'kg', pad.l-4, y+3);
+    }
+
+    // Plot line
+    ctx.strokeStyle = '#c8ff00';
+    ctx.lineWidth = 2;
+    ctx.shadowColor = '#c8ff00';
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    weights.forEach((w, idx) => {
+      const x = pad.l + (idx / Math.max(weights.length-1,1)) * chartW;
+      const y = pad.t + (1 - (w-minW)/(maxW-minW||1)) * chartH;
+      idx === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+
+    // Dots + labels
+    ctx.shadowBlur = 0;
+    weights.forEach((w, idx) => {
+      const x = pad.l + (idx / Math.max(weights.length-1,1)) * chartW;
+      const y = pad.t + (1 - (w-minW)/(maxW-minW||1)) * chartH;
+      ctx.fillStyle = '#c8ff00';
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = '#5a5a72';
+      ctx.font = '8px Space Mono, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(labels[idx], x, H-pad.b+14);
+      ctx.fillStyle = '#c8ff00';
+      ctx.fillText(w+'kg', x, y-8);
+    });
+  } catch(e) {
+    emptyEl.style.display = 'block';
+    emptyEl.textContent = 'Error loading chart: ' + e.message;
+  }
+}
+
+loadGymData();
+
+// ── UNIVERSITY / GRADE CALCULATOR ───────────────────────────────
+let modules = [];
+
+// Seed data — Semester 1 modules pre-loaded
+const SEED_MODULES = [
+  { id:1, name:'EG-133 Engineering for People Hackathon', credits:10, year:1, assessments:[
+    { id:101, module_id:1, name:'Coursework 1', weight:20, score:0,   max_score:100 },
+    { id:102, module_id:1, name:'Coursework 2', weight:25, score:75,  max_score:100 },
+    { id:103, module_id:1, name:'Coursework 3', weight:25, score:75,  max_score:100 },
+    { id:104, module_id:1, name:'Coursework 4', weight:30, score:80,  max_score:100 },
+  ]},
+  { id:2, name:'EG-151 Microcontrollers', credits:10, year:1, assessments:[
+    { id:201, module_id:2, name:'Portfolio Paperwork', weight:10, score:0,  max_score:100 },
+    { id:202, module_id:2, name:'Practical',           weight:20, score:73, max_score:100 },
+    { id:203, module_id:2, name:'Laboratory Work',     weight:20, score:80, max_score:100 },
+    { id:204, module_id:2, name:'Project',             weight:25, score:80, max_score:100 },
+    { id:205, module_id:2, name:'Online Exam',         weight:25, score:81, max_score:100 },
+  ]},
+  { id:3, name:'EG-158 Software Engineering', credits:10, year:1, assessments:[
+    { id:301, module_id:3, name:'Coursework 1',       weight:15, score:100, max_score:100 },
+    { id:302, module_id:3, name:'Coursework 2',       weight:15, score:100, max_score:100 },
+    { id:303, module_id:3, name:'Coursework 3',       weight:20, score:80,  max_score:100 },
+    { id:304, module_id:3, name:'Coursework 4',       weight:20, score:90,  max_score:100 },
+    { id:305, module_id:3, name:'Exam (January)',     weight:30, score:78,  max_score:100 },
+  ]},
+  { id:4, name:'EG-155 Circuit Analysis', credits:10, year:1, assessments:[
+    { id:401, module_id:4, name:'Coursework 1', weight:25, score:100, max_score:100 },
+    { id:402, module_id:4, name:'Coursework 2', weight:35, score:80,  max_score:100 },
+    { id:403, module_id:4, name:'Class Test',   weight:40, score:66,  max_score:100 },
+  ]},
+  { id:5, name:'EG-143 Digital Design', credits:10, year:1, assessments:[
+    { id:501, module_id:5, name:'Coursework 1', weight:33, score:80, max_score:100 },
+    { id:502, module_id:5, name:'Coursework 2', weight:33, score:63, max_score:100 },
+    { id:503, module_id:5, name:'Coursework 3', weight:34, score:53, max_score:100 },
+  ]},
+  { id:6, name:'EGA-127 Engineering Mathematics', credits:10, year:1, assessments:[] },
+];
+
+async function loadModules() {
+  // Try backend first
+  try {
+    const data = await api('GET', '/api/modules');
+    if(data && data.length > 0) {
+      modules = data;
+      renderModules();
+      calcOverallGrade();
+      return;
+    }
+  } catch(e) { /* backend not ready yet */ }
+
+  // Fall back to localStorage
+  const stored = localStorage.getItem('malik-modules-v2');
+  if(stored) {
+    try {
+      modules = JSON.parse(stored);
+      renderModules();
+      calcOverallGrade();
+      return;
+    } catch(e) {}
+  }
+
+  // First time — use seed data
+  modules = JSON.parse(JSON.stringify(SEED_MODULES)); // deep clone
+  saveModulesLocal();
+  renderModules();
+  calcOverallGrade();
+}
+
+function saveModulesLocal() {
+  localStorage.setItem('malik-modules-v2', JSON.stringify(modules));
+}
+
+function showAddModule() {
+  const f = document.getElementById('add-module-form');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+
+async function addModule() {
+  const name = document.getElementById('mod-name').value.trim();
+  const credits = parseInt(document.getElementById('mod-credits').value) || 10;
+  if(!name) { showNotif('Enter module name'); return; }
+  // Always add locally first for instant feedback
+  const newMod = { id: Date.now(), name, credits, year: 1, assessments: [] };
+  modules.push(newMod);
+  saveModulesLocal();
+  document.getElementById('mod-name').value = '';
+  document.getElementById('mod-credits').value = '';
+  renderModules();
+  showNotif('Module added: ' + name);
+  // Also try to sync to backend
+  try { await api('POST', '/api/modules', { name, credits, year: 1 }); } catch(e) {}
+}
+
+async function deleteModule(id) {
+  modules = modules.filter(m => m.id !== id);
+  saveModulesLocal();
+  renderModules();
+  calcOverallGrade();
+  try { await api('DELETE', '/api/modules/' + id); } catch(e) {}
+}
+
+async function addAssessment(moduleId) {
+  const name   = document.getElementById('aname-' + moduleId).value.trim();
+  const weight = parseFloat(document.getElementById('awt-'   + moduleId).value) || 0;
+  const score  = parseFloat(document.getElementById('asc-'   + moduleId).value);
+  if(!name || !weight) { showNotif('Enter assessment name and weight'); return; }
+  const mod = modules.find(m => m.id === moduleId);
+  if(!mod) return;
+  const newA = { id: Date.now(), module_id: moduleId, name, weight, score: isNaN(score)?null:score, max_score: 100 };
+  mod.assessments.push(newA);
+  saveModulesLocal();
+  renderModules();
+  calcOverallGrade();
+  try { await api('POST', '/api/modules/' + moduleId + '/assessments', { name, weight, score: isNaN(score)?null:score }); } catch(e) {}
+}
+
+async function updateScore(assessmentId, moduleId, score) {
+  const mod = modules.find(m => m.id === moduleId);
+  if(mod) {
+    const a = mod.assessments.find(x => x.id === assessmentId);
+    if(a) a.score = parseFloat(score);
+  }
+  saveModulesLocal();
+  calcOverallGrade();
+  try { await api('PUT', '/api/assessments/' + assessmentId, { score: parseFloat(score) }); } catch(e) {}
+}
+
+async function deleteAssessment(id, moduleId) {
+  const mod = modules.find(m => m.id === moduleId);
+  if(mod) mod.assessments = mod.assessments.filter(a => a.id !== id);
+  saveModulesLocal();
+  renderModules();
+  calcOverallGrade();
+  try { await api('DELETE', '/api/assessments/' + id); } catch(e) {}
+}
+
+function calcModuleGrade(mod) {
+  const scored = mod.assessments.filter(a => a.score !== null && a.score !== undefined && a.weight);
+  if(!scored.length) return null;
+  const totalWeight = scored.reduce((s,a) => s + parseFloat(a.weight), 0);
+  const weighted = scored.reduce((s,a) => s + (parseFloat(a.score)/parseFloat(a.max_score||100))*100*parseFloat(a.weight), 0);
+  return weighted / totalWeight;
+}
+
+function gradeClass(pct) {
+  if(pct >= 70) return { cls:'First (1st)', color:'var(--lime)' };
+  if(pct >= 60) return { cls:'2:1', color:'var(--teal)' };
+  if(pct >= 50) return { cls:'2:2', color:'var(--gold)' };
+  if(pct >= 40) return { cls:'Third', color:'var(--orange)' };
+  return { cls:'Fail', color:'var(--red)' };
+}
+
+function calcOverallGrade() {
+  const graded = modules.map(m => ({ grade: calcModuleGrade(m), credits: parseInt(m.credits)||10 })).filter(m => m.grade !== null);
+  if(!graded.length) { document.getElementById('overall-grade').textContent = '—'; document.getElementById('overall-class').textContent = '—'; return; }
+  const totalCredits = graded.reduce((s,m) => s+m.credits, 0);
+  const weighted = graded.reduce((s,m) => s + m.grade*m.credits, 0);
+  const avg = weighted / totalCredits;
+  const gc = gradeClass(avg);
+  document.getElementById('overall-grade').textContent = avg.toFixed(1) + '%';
+  document.getElementById('overall-grade').style.color = gc.color;
+  document.getElementById('overall-class').textContent = gc.cls;
+  document.getElementById('overall-class').style.color = gc.color;
+}
+
+function renderModules() {
+  const c = document.getElementById('modules-container');
+  if(!c) return;
+  if(!modules.length) {
+    c.innerHTML = '<div style="color:var(--muted2);font-size:12px;text-align:center;padding:30px">No modules yet — add your first module above</div>';
+    return;
+  }
+  c.innerHTML = modules.map(mod => {
+    const grade = calcModuleGrade(mod);
+    const gc = grade !== null ? gradeClass(grade) : null;
+    const totalWt = mod.assessments.reduce((s,a) => s+parseFloat(a.weight||0),0);
+    return `
+    <div class="panel" style="margin-bottom:12px">
+      <div class="panel-header">
+        <div>
+          <span class="panel-title">${mod.name}</span>
+          <span style="font-size:9px;color:var(--muted);margin-left:10px">${mod.credits} credits</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          ${gc ? '<span style="font-family:var(--display);font-size:20px;color:' + gc.color + '">' + grade.toFixed(1) + '% — ' + gc.cls + '</span>' : '<span style="color:var(--muted2);font-size:11px">No scores yet</span>'}
+          <button class="icon-btn" onclick="deleteModule(${mod.id})">✕</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <table style="width:100%;border-collapse:collapse;margin-bottom:14px">
+          <tr>
+            <th style="font-size:9px;letter-spacing:0.15em;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--border)">Assessment</th>
+            <th style="font-size:9px;letter-spacing:0.15em;color:var(--muted);text-align:center;padding:6px 8px;border-bottom:1px solid var(--border)">Weight %</th>
+            <th style="font-size:9px;letter-spacing:0.15em;color:var(--muted);text-align:center;padding:6px 8px;border-bottom:1px solid var(--border)">Score %</th>
+            <th style="font-size:9px;letter-spacing:0.15em;color:var(--muted);text-align:center;padding:6px 8px;border-bottom:1px solid var(--border)">Contribution</th>
+            <th></th>
+          </tr>
+          ${mod.assessments.map(a => {
+            const contribution = a.score !== null && a.score !== undefined ? ((parseFloat(a.score)/parseFloat(a.max_score||100))*100*parseFloat(a.weight)/100).toFixed(1) : '—';
+            const scoreColor = a.score !== null && a.score !== undefined ? gradeClass(parseFloat(a.score)).color : 'var(--muted2)';
+            return `<tr>
+              <td style="padding:8px;font-size:12px;border-bottom:1px solid var(--border)">${a.name}</td>
+              <td style="padding:8px;text-align:center;font-size:12px;border-bottom:1px solid var(--border);color:var(--muted)">${a.weight}%</td>
+              <td style="padding:8px;text-align:center;border-bottom:1px solid var(--border)">
+                <input type="number" min="0" max="100" step="0.1"
+                  value="${a.score !== null && a.score !== undefined ? a.score : ''}"
+                  placeholder="—"
+                  style="width:60px;background:transparent;border:none;border-bottom:1px solid var(--border2);color:${scoreColor};font-family:var(--mono);font-size:12px;text-align:center;outline:none"
+                  onchange="updateScore(${a.id},${mod.id},this.value)">
+              </td>
+              <td style="padding:8px;text-align:center;font-size:12px;border-bottom:1px solid var(--border);color:${scoreColor}">${contribution}%</td>
+              <td style="padding:8px;border-bottom:1px solid var(--border)"><button class="icon-btn" onclick="deleteAssessment(${a.id},${mod.id})">✕</button></td>
+            </tr>`;
+          }).join('')}
+        </table>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:10px">Total weight allocated: <span style="color:${totalWt===100?'var(--lime)':totalWt>100?'var(--red)':'var(--gold)'}">${totalWt}%</span> ${totalWt===100?'✓':totalWt>100?'(over 100%)':'(remaining: '+(100-totalWt)+'%)'}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          <input type="text" class="os-input" id="aname-${mod.id}" placeholder="Assessment name" style="flex:2;min-width:140px;font-size:11px">
+          <input type="number" class="os-input" id="awt-${mod.id}" placeholder="Weight %" style="width:80px;font-size:11px">
+          <input type="number" class="os-input" id="asc-${mod.id}" placeholder="Score %" style="width:80px;font-size:11px">
+          <button class="btn btn-teal btn-sm" onclick="addAssessment(${mod.id})">+ ADD</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+loadModules();
+
+// ── CAREERS ──────────────────────────────────────────────────────
+const careerData = {
+  embedded:  { title:'Embedded Systems',      icon:'🔧', color:'var(--teal)',   salary:'£35k–£85k',  skills:['C/C++','RTOS','ARM Cortex-M','SPI/I2C','JTAG','KiCad','Git'], overview:'Firmware, microcontrollers, IoT, automotive — one of the most in-demand EEE paths.', roadmap:[{t:'Master C Programming',d:'Pointers, memory, bit manipulation. Foundation of everything embedded.'},{t:'Get an STM32 Board',d:'£10 STM32F4. Write bare-metal code without Arduino libraries.'},{t:'Learn FreeRTOS',d:'Task scheduling, semaphores, queues. Every real product uses an RTOS.'},{t:'Build 3 Portfolio Projects',d:'Driver library, IoT sensor node, motor controller. Ship all to GitHub.'},{t:'Contribute to Open Source',d:'Zephyr or FreeRTOS on GitHub. Massive CV differentiator.'}], resources:[{type:'Book',name:'Programming Embedded Systems',desc:'Barr & Massa — the bible'},{type:'Course',name:'FastBit Embedded C (Udemy)',desc:'Most practical embedded C course'},{type:'YouTube',name:'Low Level Learning',desc:'Best embedded YouTube channel'},{type:'Tool',name:'STM32CubeIDE',desc:'Free official IDE for STM32'}], companies:['ARM','STMicroelectronics','NXP','Qualcomm','BAE Systems','Dyson']},
+  'ai-ml':   { title:'AI/ML Engineer',        icon:'🤖', color:'var(--violet)', salary:'£50k–£150k+', skills:['Python','PyTorch','Linear Algebra','Signal Processing','Edge ML','Statistics','Git'], overview:'EEE + ML — signal processing AI, edge ML on embedded, neural networks for hardware.', roadmap:[{t:'Linear Algebra First',d:'3B1B then MIT 18.06. Without this ML is a black box forever.'},{t:'Python + NumPy/Pandas',d:'Scientific stack. Learn vectorisation, not for loops.'},{t:'Andrew Ng ML Course',d:'Coursera, audit free. Complete every assignment.'},{t:'PyTorch from Scratch',d:'Build a neural net without ML libraries first, then use PyTorch.'},{t:'EEE + ML Crossover Project',d:'Train on a signal dataset (ECG, audio, vibration).'}], resources:[{type:'Course',name:'Andrew Ng ML Specialisation',desc:'Coursera — the definitive starting point'},{type:'Book',name:'Deep Learning (Goodfellow)',desc:'Free at deeplearningbook.org'},{type:'YouTube',name:'3Blue1Brown',desc:'Neural Networks series — unmatched intuition'},{type:'YouTube',name:'Andrej Karpathy',desc:'Building GPT from scratch'}], companies:['DeepMind','Waymo','Tesla','ARM','Graphcore','Amazon']},
+  power:     { title:'Power & Energy',         icon:'⚡', color:'var(--gold)',   salary:'£32k–£75k',  skills:['Power electronics','MATLAB/Simulink','Grid systems','SCADA','Renewables','Power factor'], overview:'Grid infrastructure, renewables, power electronics. Huge demand with the energy transition.', roadmap:[{t:'Master Circuit Theory',d:'Thevenin/Norton, AC analysis, power factor. Hayt textbook.'},{t:'Learn MATLAB/Simulink',d:'Industry standard. Free with your Swansea uni license.'},{t:'Power Electronics Project',d:'Build a buck/boost converter. Understand switching regulators.'},{t:'Get IEEE Membership',d:'Free student membership. Papers, events, networking.'},{t:'Target Summer Internship',d:'National Grid, SSE, Siemens Energy all have grad schemes.'}], resources:[{type:'Book',name:'Power Electronics (Mohan)',desc:'Ned Mohan — the standard textbook'},{type:'YouTube',name:'The Engineering Mindset',desc:'Excellent power explanations'},{type:'Tool',name:'MATLAB/Simulink',desc:'Free with Swansea license'}], companies:['National Grid','Siemens Energy','SSE','Orsted','Rolls-Royce','ABB']},
+  rf:        { title:'RF & Telecoms',          icon:'📡', color:'var(--green)',  salary:'£38k–£90k',  skills:['RF circuit design','Antenna theory','ADS/CST','Signal processing','MATLAB','VNA'], overview:'Wireless comms, antennas, 5G/6G, satellite, radar. Highly specialised and well paid.', roadmap:[{t:'Strong EM Theory',d:"Maxwell equations, transmission lines, Smith chart. Your uni EM module."},{t:'Learn RF Simulation',d:'CST Studio (free student) or ADS. Simulate a patch antenna.'},{t:'Build an SDR Project',d:'RTL-SDR dongle £20. Receive aircraft signals, decode FM.'},{t:'Study 5G NR Standard',d:'3GPP free specs + Sharetechnote.com.'}], resources:[{type:'Book',name:'Pozar Microwave Engineering',desc:'The RF bible'},{type:'Tool',name:'RTL-SDR',desc:'£20 software defined radio'},{type:'YouTube',name:'W2AEW',desc:'Best RF fundamentals channel'}], companies:['Ericsson','Nokia','Vodafone','BT','GCHQ','Leonardo']},
+  vlsi:      { title:'VLSI & Semiconductor',   icon:'🔬', color:'var(--orange)', salary:'£45k–£120k', skills:['Verilog/VHDL','FPGA','CMOS design','Cadence/Synopsys','SPICE','Digital logic'], overview:"Designing chips — extremely specialised, highly paid, global talent shortage.", roadmap:[{t:'Master Digital Logic',d:'Boolean algebra, flip-flops, FSMs. Your Year 1 digital electronics.'},{t:'Learn Verilog',d:'HDL for hardware. Free: nandland.com + iverilog.'},{t:'Get an FPGA Board',d:'£30 Arty A7 or Basys 3. Implement a CPU from scratch.'},{t:'Study CMOS Fundamentals',d:"Razavi Design of Analog CMOS ICs — free online."}], resources:[{type:'Book',name:'Verilog HDL (Palnitkar)',desc:'Best Verilog textbook for beginners'},{type:'Course',name:'nandland.com',desc:'Free FPGA/Verilog tutorials'},{type:'Tool',name:'iverilog + GTKWave',desc:'Free Verilog simulation'}], companies:['ARM','Intel','TSMC','Imagination Technologies','Graphcore','Qualcomm']},
+  control:   { title:'Control Systems',        icon:'🎛️', color:'var(--red)',    salary:'£35k–£80k',  skills:['Control theory','MATLAB/Simulink','PID tuning','State space','ROS','Laplace'], overview:'Controlling machines, robots, aircraft, industrial processes. Core EEE underpinning aerospace.', roadmap:[{t:'Master Laplace Transforms',d:'Foundation of control theory. Your uni maths modules.'},{t:'Build a PID Controller',d:'Balance a robot arm or control temperature on Arduino.'},{t:'Learn MATLAB/Simulink',d:'Control Systems Toolbox — industry standard.'},{t:'Study Modern Control',d:'State space, LQR, Kalman filter. Brian Douglas YouTube.'}], resources:[{type:'YouTube',name:'Brian Douglas',desc:'Best control systems series — crystal clear'},{type:'Book',name:'Ogata Modern Control Engineering',desc:'Standard university textbook'},{type:'Tool',name:'MATLAB Control Toolbox',desc:'Free with Swansea license'}], companies:['Airbus','BAE Systems','Rolls-Royce','ABB','Boston Dynamics','SpaceX']},
+  photonics: { title:'Photonics & Optics',     icon:'💡', color:'var(--sky)',    salary:'£35k–£85k',  skills:['Photonics','Optics','COMSOL','Fibre optics','Laser systems','Python'], overview:'Lasers, fibre optics, LiDAR, quantum photonics. Growing with autonomous vehicles.', roadmap:[{t:'Study Electromagnetic Waves',d:"Maxwell equations, wave optics, polarisation. Your EM module."},{t:'Learn COMSOL',d:'Free student trial. Simulate optical waveguides.'},{t:'Fibre Optics Project',d:'Fibre optic kit £30. Measure attenuation and bending loss.'}], resources:[{type:'Book',name:'Saleh & Teich Photonics',desc:'The photonics textbook'},{type:'Tool',name:'COMSOL',desc:'Free student trial'}], companies:['II-VI','Coherent','Lumentum','Leonardo','Google Quantum AI']},
+  quant:     { title:'Quantitative Finance',   icon:'📊', color:'var(--gold)',   salary:'£60k–£200k+',skills:['Python','Statistics','Signal processing','C++','Stochastic calculus','Time series'], overview:'Signal processing + maths applied to finance. Highest paying adjacent career for EEE graduates.', roadmap:[{t:'Master Probability & Stats',d:'MIT 6.041. Your EEE signals background is a huge advantage.'},{t:'Python for Finance',d:'pandas, numpy, yfinance. Build a backtesting framework.'},{t:'Study Options Pricing',d:'Black-Scholes — you already have the maths from EEE.'},{t:'Project Euler + Leetcode',d:'Quant firms use competitive programming interviews. Daily practice.'},{t:'Target Spring Weeks',d:'Jane Street, Goldman, Citadel all run first-year programmes.'}], resources:[{type:'Book',name:'Options Futures & Derivatives (Hull)',desc:'The quant finance bible'},{type:'YouTube',name:'QuantPy',desc:'Python for quant finance'},{type:'Resource',name:'Kaggle Jane Street',desc:'Real trading data + ML challenge'}], companies:['Jane Street','Citadel','Two Sigma','Goldman Sachs','Man Group','Marshall Wace']}
 };
 
-// Render career cards
-document.getElementById('career-list-container').innerHTML=Object.entries(careerData).map(([id,c])=>`
-  <div class="career-card" onclick="showCareerDetail('${id}')" style="border-top:2px solid ${c.color}">
-    <div class="career-card-icon">${c.icon}</div>
-    <div class="career-card-title" style="color:${c.color}">${c.title}</div>
-    <div class="career-card-desc">${c.overview.substring(0,90)}...</div>
-    <div style="margin-top:10px"><button class="btn btn-lime btn-sm">EXPLORE ►</button></div>
-  </div>`).join('');
+// Render career grid
+const clEl = document.getElementById('career-list-container');
+if(clEl) {
+  clEl.innerHTML = Object.entries(careerData).map(([id,c]) => `
+    <div class="career-card" onclick="showCareerDetail('${id}')" style="border-top:2px solid ${c.color}">
+      <div class="career-card-icon">${c.icon}</div>
+      <div class="career-card-title" style="color:${c.color}">${c.title}</div>
+      <div class="career-card-desc">${c.overview.substring(0,88)}...</div>
+      <div style="margin-top:10px"><span style="font-family:var(--display);font-size:14px;color:${c.color}">${c.salary}</span></div>
+      <div style="margin-top:8px"><button class="btn btn-lime btn-sm">EXPLORE ►</button></div>
+    </div>`).join('');
+}
 
-function showCareerDetail(id){
-  const career=careerData[id];
+// Career view toggle
+function setCareerView(mode, btn) {
+  document.querySelectorAll('#page-careers .mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('careers-grid-view').style.display = mode === 'grid' ? 'block' : 'none';
+  document.getElementById('careers-tree-view').style.display = mode === 'tree' ? 'block' : 'none';
+  if(mode === 'tree') setTimeout(renderCareerTree, 50);
+}
+
+// Career tree map
+function renderCareerTree() {
+  const svg = document.getElementById('career-tree-svg');
+  if(!svg) return;
+  const W = svg.getBoundingClientRect().width || 800;
+  const H = 500;
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  svg.setAttribute('height', H);
+
+  const entries = Object.entries(careerData);
+  const centerX = W/2, centerY = H/2, radius = Math.min(W,H)*0.35;
+  let html = '<rect width="' + W + '" height="' + H + '" fill="#0e0e12"/>';
+
+  // Draw center node
+  html += '<circle cx="' + centerX + '" cy="' + centerY + '" r="45" fill="#0e0e12" stroke="#c8ff00" stroke-width="2"/>';
+  html += '<text x="' + centerX + '" y="' + (centerY-6) + '" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="16" fill="#c8ff00">EEE</text>';
+  html += '<text x="' + centerX + '" y="' + (centerY+10) + '" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="16" fill="#c8ff00">DEGREE</text>';
+
+  entries.forEach(([id, c], idx) => {
+    const angle = (idx / entries.length) * Math.PI * 2 - Math.PI/2;
+    const nx = centerX + Math.cos(angle) * radius;
+    const ny = centerY + Math.sin(angle) * radius;
+    const col = c.color.replace('var(--','').replace(')','');
+    const colorMap = {lime:'#c8ff00',teal:'#00e5cc',violet:'#8b5cf6',gold:'#fbbf24',green:'#00ff88',red:'#ff3366',orange:'#ff5500',sky:'#38bdf8'};
+    const hex = colorMap[col] || '#c8ff00';
+
+    // Line from center to node
+    html += '<line x1="' + centerX + '" y1="' + centerY + '" x2="' + nx + '" y2="' + ny + '" stroke="' + hex + '" stroke-width="1" stroke-opacity="0.3"/>';
+
+    // Node circle
+    html += '<circle cx="' + nx + '" cy="' + ny + '" r="36" fill="' + hex + '18" stroke="' + hex + '" stroke-width="1.5" style="cursor:pointer" data-career-id="' + id + '"/>';
+
+    // Icon
+    html += '<text x="' + nx + '" y="' + (ny-8) + '" text-anchor="middle" font-size="16">' + c.icon + '</text>';
+
+    // Salary badge
+    html += '<text x="' + nx + '" y="' + (ny+8) + '" text-anchor="middle" font-family="Space Mono,monospace" font-size="7" fill="' + hex + '">' + c.salary + '</text>';
+
+    // Label outside
+    const labelR = radius + 52;
+    const lx = centerX + Math.cos(angle) * labelR;
+    const ly = centerY + Math.sin(angle) * labelR;
+    const anchor = nx > centerX + 10 ? 'start' : nx < centerX - 10 ? 'end' : 'middle';
+    const words = c.title.split(' ');
+    words.forEach((w, wi) => {
+      html += '<text x="' + lx + '" y="' + (ly + wi*13 - (words.length-1)*6) + '" text-anchor="' + anchor + '" font-family="Bebas Neue,sans-serif" font-size="11" fill="' + hex + '">' + w + '</text>';
+    });
+  });
+
+  svg.innerHTML = html;
+  // Wire up tree node clicks via event delegation
+  svg.addEventListener('click', function(e) {
+    const node = e.target.closest('[data-career-id]');
+    if(node) {
+      const id = node.getAttribute('data-career-id');
+      showCareerDetail(id);
+      setCareerView('grid', document.querySelector('#page-careers .mode-btn'));
+    }
+  });
+}
+
+function showCareerDetail(id) {
+  const career = careerData[id];
   if(!career) return;
-  document.getElementById('careers-grid-view').style.display='none';
-  const detail=document.getElementById('career-detail-view');
+  document.getElementById('careers-grid-view').style.display = 'none';
+  document.getElementById('careers-tree-view').style.display = 'none';
+  const detail = document.getElementById('career-detail-view');
   detail.classList.add('active');
-  document.getElementById('career-detail-title').textContent=career.icon+' '+career.title;
-  document.getElementById('career-detail-content').innerHTML=`
+  document.getElementById('career-detail-title').textContent = career.icon + ' ' + career.title;
+  document.getElementById('career-detail-content').innerHTML = `
     <div class="grid-2" style="margin-bottom:14px">
       <div class="panel">
         <div class="panel-header"><span class="panel-title">Overview</span></div>
         <div class="panel-body">
           <p style="font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:12px">${career.overview}</p>
           <div style="font-size:9px;letter-spacing:0.15em;color:var(--muted2);text-transform:uppercase">UK Salary Range</div>
-          <div style="font-family:var(--display);font-size:18px;color:${career.color}">${career.salaryUK}</div>
+          <div style="font-family:var(--display);font-size:20px;color:${career.color}">${career.salary}</div>
         </div>
       </div>
       <div class="panel">
-        <div class="panel-header"><span class="panel-title">Key Skills To Build</span></div>
+        <div class="panel-header"><span class="panel-title">Key Skills</span></div>
         <div class="panel-body">
           <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px">
-            ${career.skills.map(s=>`<span class="tag tag-lime">${s}</span>`).join('')}
+            ${career.skills.map(s => '<span class="tag tag-lime">' + s + '</span>').join('')}
           </div>
-          <div style="font-size:9px;letter-spacing:0.15em;color:var(--muted2);text-transform:uppercase;margin-bottom:6px">Target Companies</div>
+          <div style="font-size:9px;color:var(--muted2);text-transform:uppercase;margin-bottom:6px">Target Companies</div>
           <div style="display:flex;flex-wrap:wrap;gap:5px">
-            ${career.companies.map(c=>`<span class="tag tag-gold">${c}</span>`).join('')}
+            ${career.companies.map(c => '<span class="tag tag-gold">' + c + '</span>').join('')}
           </div>
         </div>
       </div>
     </div>
     <div class="panel" style="margin-bottom:14px">
       <div class="panel-header">
-        <span class="panel-title">Your Roadmap — Step by Step</span>
+        <span class="panel-title">Roadmap — Step by Step</span>
         <button class="btn btn-gold btn-sm" id="career-ai-btn">⚡ AI PERSONALISE THIS</button>
       </div>
       <div class="panel-body">
         <div style="display:flex;flex-direction:column;gap:3px">
-          ${career.roadmap.map((s,i)=>`
-          <div class="roadmap-step" style="border-left-color:${career.color}">
-            <div class="roadmap-step-num" style="color:${career.color}">${i+1}</div>
-            <div><h4>${s.t}</h4><p>${s.d}</p></div>
-          </div>`).join('')}
+          ${career.roadmap.map((s,i) =>
+            '<div class="roadmap-step" style="border-left-color:' + career.color + '">' +
+            '<div class="roadmap-step-num" style="color:' + career.color + '">' + (i+1) + '</div>' +
+            '<div><h4>' + s.t + '</h4><p>' + s.d + '</p></div></div>'
+          ).join('')}
         </div>
         <div class="ai-box" id="career-ai-advice" style="margin-top:12px;display:none"></div>
       </div>
     </div>
     <div class="panel">
-      <div class="panel-header"><span class="panel-title">Resources — Books · Courses · Tools · Communities</span></div>
+      <div class="panel-header"><span class="panel-title">Resources</span></div>
       <div class="panel-body">
         <div class="resource-grid">
-          ${career.resources.map(r=>`
-          <div class="resource-item">
-            <div class="resource-item-type">${r.type}</div>
-            <div class="resource-item-name">${r.name}</div>
-            <div class="resource-item-desc">${r.desc}</div>
-          </div>`).join('')}
+          ${career.resources.map(r =>
+            '<div class="resource-item">' +
+            '<div class="resource-item-type">' + r.type + '</div>' +
+            '<div class="resource-item-name">' + r.name + '</div>' +
+            '<div class="resource-item-desc">' + r.desc + '</div></div>'
+          ).join('')}
         </div>
       </div>
     </div>`;
-  // Wire up AI button after DOM injection
-  setTimeout(()=>{
-    const btn=document.getElementById('career-ai-btn');
-    if(btn) btn.addEventListener('click',()=>aiCareerAdvice(id));
-  },0);
+  setTimeout(() => {
+    const btn = document.getElementById('career-ai-btn');
+    if(btn) btn.addEventListener('click', () => {
+      const el = document.getElementById('career-ai-advice');
+      el.style.display = 'block';
+      askAI('/api/ai/career-advice', { careerTitle: career.title }, el);
+    });
+  }, 0);
 }
 
-async function aiCareerAdvice(careerId){
-  const career=careerData[careerId];
-  const el=document.getElementById('career-ai-advice');
-  el.style.display='block';
-  el.innerHTML='<span class="spinner"></span> Personalising roadmap for you...';
-  el.className='ai-box loading';
-  const ans=await askClaude(`Malik is a 1st year EEE student at Swansea University interested in ${career.title}. Given he is in Year 1 with no industry experience, give him 3 specific actions he can take THIS TERM (next 3 months) to start building towards this career. Be very specific and actionable. Also mention one thing about this career path most students don't know.`,400);
-  el.innerHTML='<strong style="color:var(--gold)">AI Advice For You:</strong><br><br>'+ans.replace(/\n/g,'<br>');
-  el.className='ai-box';
-}
-function backToCareers(){
-  document.getElementById('careers-grid-view').style.display='block';
-  const d=document.getElementById('career-detail-view');
+function backToCareers() {
+  document.getElementById('careers-grid-view').style.display = 'block';
+  document.getElementById('careers-tree-view').style.display = 'none';
+  const d = document.getElementById('career-detail-view');
   d.classList.remove('active');
-  d.querySelector('#career-detail-content').innerHTML='';
+  document.getElementById('career-detail-content').innerHTML = '';
 }
 
-// ═══════════════════════════════════════
-// HUSTLE
-// ═══════════════════════════════════════
-document.getElementById('hustle-active').innerHTML=[
-  {t:'EEE Tutoring',d:'A-level Physics/Maths. £20–40/hr. Find on Tutorful or Superprof. Zero startup cost.',status:'EXPLORE',color:'var(--lime)'},
-  {t:'Sell Project Kits',d:'Document Month 1 project. Sell component kit + guide on Etsy/Tindie. £15–25 per kit.',status:'EXPLORE',color:'var(--lime)'},
-  {t:'Technical Content',d:'Document learning on X/YouTube Shorts. "EEE student builds X" gets traction.',status:'PLAN',color:'var(--gold)'},
-].map(h=>`
-  <div style="background:var(--s2);border:1px solid var(--border);padding:13px 15px;display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">
-    <div>
-      <div style="font-size:13px;font-weight:700;margin-bottom:3px">${h.t}</div>
-      <div style="font-size:11px;color:var(--muted)">${h.d}</div>
-    </div>
-    <span class="tag" style="border-color:${h.color};color:${h.color}">${h.status}</span>
-  </div>`).join('');
-
-async function generateHustleIdeas(){
-  const skills=document.getElementById('hustle-skill').value.trim();
-  const time=document.getElementById('hustle-time').value.trim();
-  if(!skills) return showNotif('Enter your skills first');
-  const el=document.getElementById('hustle-ideas');
-  el.innerHTML='<span class="spinner"></span> Generating personalised hustle ideas...';
-  el.className='ai-box loading';
-  const ans=await askClaude(`Malik is a 1st year EEE student at Swansea University. His skills: ${skills}. Available time: ${time||'a few hours per week'}. Generate 5 realistic side hustle ideas specifically for an EEE student in the UK. For each: name, how to start this week, realistic monthly income potential, required time commitment, and why his EEE skills give him an edge. Be specific and honest about what's achievable as a busy student.`,600);
-  el.innerHTML=ans.replace(/\n/g,'<br>');
-  el.className='ai-box';
+// ── HUSTLE ───────────────────────────────────────────────────────
+const hustleEl = document.getElementById('hustle-active');
+if(hustleEl) {
+  hustleEl.innerHTML = [
+    {t:'EEE Tutoring',      d:'A-level Physics/Maths. £20–40/hr via Tutorful or Superprof. Zero startup cost.',     status:'EXPLORE',color:'var(--lime)'},
+    {t:'Sell Project Kits', d:'Document Month 1 project. Sell kit + guide on Etsy/Tindie. £15–25 per kit.',          status:'EXPLORE',color:'var(--lime)'},
+    {t:'Technical Content', d:'Document learning on X/YouTube Shorts. "EEE student builds X" format gets traction.', status:'PLAN',   color:'var(--gold)'},
+  ].map(h =>
+    '<div style="background:var(--s2);border:1px solid var(--border);padding:13px 15px;display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">' +
+    '<div><div style="font-size:13px;font-weight:700;margin-bottom:3px">' + h.t + '</div>' +
+    '<div style="font-size:11px;color:var(--muted)">' + h.d + '</div></div>' +
+    '<span class="tag" style="border-color:' + h.color + ';color:' + h.color + '">' + h.status + '</span></div>'
+  ).join('');
 }
 
-// ═══════════════════════════════════════
-// HABITS
-// ═══════════════════════════════════════
-const habitDefs=[
-  {name:'Sabaq',color:'var(--gold)'},
-  {name:'Sabqi + Manzil',color:'var(--gold)'},
-  {name:'Tilawah',color:'var(--gold)'},
-  {name:'Anki Cards',color:'var(--teal)'},
-  {name:'Uni Notes Review',color:'var(--teal)'},
-  {name:'Project Lab',color:'var(--lime)'},
-  {name:'Curiosity Lab',color:'var(--violet)'},
-  {name:'Gym Session',color:'var(--orange)'},
-  {name:'Sport/Activity',color:'var(--pink)'},
+async function generateHustleIdeas() {
+  const skills = document.getElementById('hustle-skill').value.trim();
+  const timeAvailable = document.getElementById('hustle-time').value.trim();
+  if(!skills) { showNotif('Enter your skills first'); return; }
+  await askAI('/api/ai/hustle-ideas', { skills, timeAvailable }, document.getElementById('hustle-ideas'));
+}
+
+async function analyseBusinessIdea() {
+  const idea = document.getElementById('business-idea-input').value.trim();
+  if(!idea) { showNotif('Describe your business idea first'); return; }
+  const el = document.getElementById('business-analysis');
+  el.style.display = 'block';
+  await askAI('/api/ai/business-analysis', { idea }, el);
+}
+
+// ── HABITS ───────────────────────────────────────────────────────
+const habitDefs = [
+  {name:'Sabaq',            color:'var(--gold)'},
+  {name:'Sabqi + Manzil',  color:'var(--gold)'},
+  {name:'Tilawah',          color:'var(--gold)'},
+  {name:'Anki Cards',       color:'var(--teal)'},
+  {name:'Uni Notes Review', color:'var(--teal)'},
+  {name:'Project Lab',      color:'var(--lime)'},
+  {name:'Curiosity Lab',    color:'var(--violet)'},
+  {name:'Gym Session',      color:'var(--orange)'},
+  {name:'Sport/Activity',   color:'var(--pink)'},
 ];
-const habitDays=['Sat','Sun','Mon','Tue','Wed','Thu','Fri'];
-let habitState=JSON.parse(localStorage.getItem('malik-habits-v3')||'{}');
+const habitDays = ['Sat','Sun','Mon','Tue','Wed','Thu','Fri'];
+let habitState = {};
 
-function renderHabits(){
-  const c=document.getElementById('habits-container');
-  c.innerHTML=`
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)">
-      <div style="width:170px"></div>
-      ${habitDays.map(d=>`<div style="font-size:9px;color:var(--muted);letter-spacing:0.1em;width:20px;text-align:center">${d}</div>`).join('')}
-      <div style="margin-left:6px;font-size:9px;color:var(--muted2);letter-spacing:0.1em">SCORE</div>
-    </div>
-    ${habitDefs.map((h,hi)=>{
-      const done=habitDays.filter((_,di)=>habitState[`${hi}-${di}`]).length;
-      return `<div class="habit-row">
-        <div class="habit-name" style="color:${h.color}">${h.name}</div>
-        <div class="habit-dots">
-          ${habitDays.map((_,di)=>`<div class="hdot ${habitState[`${hi}-${di}`]?'done':''}" style="${habitState[`${hi}-${di}`]?`background:${h.color};border-color:${h.color};`:''}" onclick="toggleHabit(${hi},${di})"></div>`).join('')}
-        </div>
-        <div class="habit-streak" style="color:${h.color}">${done}/7</div>
-      </div>`;
-    }).join('')}`;
+async function loadHabits() {
+  try {
+    const data = await api('GET', '/api/habits');
+    habitState = data.state || {};
+  } catch(e) {
+    habitState = JSON.parse(localStorage.getItem('malik-habits-v3') || '{}');
+  }
+  renderHabits();
+  updateStats();
 }
-function toggleHabit(hi,di){
-  habitState[`${hi}-${di}`]=!habitState[`${hi}-${di}`];
-  localStorage.setItem('malik-habits-v3',JSON.stringify(habitState));
-  renderHabits();updateStats();
-}
-function resetHabits(){
-  habitState={};localStorage.setItem('malik-habits-v3','{}');
-  renderHabits();showNotif('Habits reset for new week');
-}
-renderHabits();
 
-// ═══════════════════════════════════════
-// STATS
-// ═══════════════════════════════════════
-function updateStats(){
-  document.getElementById('home-ideas').textContent=ideas.length;
-  document.getElementById('home-streak').textContent=Object.values(habitState).filter(Boolean).length;
-  document.getElementById('home-projects').textContent=1+ideas.filter(i=>i.cat==='EEE'||i.cat==='AI').length;
+function renderHabits() {
+  const c = document.getElementById('habits-container');
+  if(!c) return;
+  c.innerHTML =
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)">' +
+    '<div style="min-width:170px"></div>' +
+    habitDays.map(d => '<div style="font-size:9px;color:var(--muted);letter-spacing:0.1em;width:20px;text-align:center">' + d + '</div>').join('') +
+    '<div style="margin-left:6px;font-size:9px;color:var(--muted2)">SCORE</div></div>' +
+    habitDefs.map((h, hi) => {
+      const done = habitDays.filter((_,di) => habitState[hi+'-'+di]).length;
+      return '<div class="habit-row">' +
+        '<div class="habit-name" style="color:' + h.color + '">' + h.name + '</div>' +
+        '<div class="habit-dots">' +
+        habitDays.map((_,di) => {
+          const isDone = !!habitState[hi+'-'+di];
+          return '<div class="hdot' + (isDone?' done':'') + '" style="' + (isDone?'background:'+h.color+';border-color:'+h.color+';':'') + '" onclick="toggleHabit(' + hi + ',' + di + ')"></div>';
+        }).join('') +
+        '</div><div class="habit-streak" style="color:' + h.color + '">' + done + '/7</div></div>';
+    }).join('');
+}
+
+async function toggleHabit(hi, di) {
+  const key = hi + '-' + di;
+  habitState[key] = !habitState[key];
+  renderHabits();
+  updateStats();
+  try {
+    await api('POST', '/api/habits/toggle', { habitIdx: hi, dayIdx: di, done: habitState[key] });
+  } catch(e) {
+    localStorage.setItem('malik-habits-v3', JSON.stringify(habitState));
+  }
+}
+
+async function resetHabits() {
+  try { await api('POST', '/api/habits/reset'); } catch(e) {}
+  habitState = {};
+  localStorage.setItem('malik-habits-v3', '{}');
+  renderHabits();
+  showNotif('Habits reset for new week');
+}
+
+loadHabits();
+
+// ── STATS ────────────────────────────────────────────────────────
+function updateStats() {
+  const ideasEl = document.getElementById('home-ideas');
+  const streakEl = document.getElementById('home-streak');
+  const projEl = document.getElementById('home-projects');
+  if(ideasEl)  ideasEl.textContent  = ideas.length;
+  if(streakEl) streakEl.textContent = Object.values(habitState).filter(Boolean).length;
+  if(projEl)   projEl.textContent   = 1 + ideas.filter(i => (i.category||'').match(/EEE|AI/i)).length;
 }
 updateStats();
-
-// ═══════════════════════════════════════
-// NOTIFICATIONS
-// ═══════════════════════════════════════
-function showNotif(msg){
-  const ex=document.querySelector('.notif');if(ex)ex.remove();
-  const n=document.createElement('div');
-  n.className='notif';
-  n.innerHTML=`<span style="color:var(--lime)">■</span> ${msg}`;
-  document.body.appendChild(n);
-  setTimeout(()=>n.remove(),3000);
-}
 </script>
 </body>
 </html>
