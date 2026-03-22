@@ -853,6 +853,11 @@ setInterval(updateClock,1000); updateClock();
 // API KEY
 // ═══════════════════════════════════════
 let apiKey = localStorage.getItem('malik-os-api-key') || '';
+function setAiConnected(v){
+  const dot=document.getElementById('ai-status-dot');
+  if(v){ dot.classList.add('live'); }
+  else { dot.classList.remove('live'); }
+}
 if(apiKey){
   document.getElementById('api-key-input').value='••••••••••••••••';
   setAiConnected(true);
@@ -866,11 +871,6 @@ function saveApiKey(){
     setAiConnected(true);
     showNotif('AI Connected — Intelligence Active');
   }
-}
-function setAiConnected(v){
-  const dot=document.getElementById('ai-status-dot');
-  if(v){ dot.classList.add('live'); }
-  else { dot.classList.remove('live'); }
 }
 
 async function testAI(){
@@ -893,12 +893,8 @@ async function askClaude(prompt, maxTokens=600){
   if(!apiKey) return 'Connect your Claude API key in the top bar to activate AI features.';
 
   const direct = 'https://api.anthropic.com/v1/messages';
-  // When opened as file:// the browser blocks direct cross-origin requests.
-  // corsproxy.io forwards headers (including x-api-key) untouched.
-  const isLocal = window.location.protocol === 'file:';
-  const url = isLocal
-    ? 'https://corsproxy.io/?' + encodeURIComponent(direct)
-    : direct;
+  // Anthropic API has no CORS headers - must always proxy regardless of host
+  const url = 'https://corsproxy.io/?' + encodeURIComponent(direct);
 
   try{
     const res = await fetch(url, {
@@ -955,7 +951,7 @@ function buildSchedule(){
     Tue:['🕌 Sabqi (7am)','🎓 Lectures (9am)','🧮 Curiosity (2pm)','🥊 Sport (5pm)','📖 Tilawah (9pm)'],
     Wed:['🕌 Sabaq (7am)','🎓 Lectures (9am)','⚗️ Projects (2pm)','💪 Gym D2 (5pm)','🎓 Problems (8pm)'],
     Thu:['🕌 Sabqi (7am)','🎓 Lectures (9am)','🥊 Sport (2pm)','🧮 Curiosity (5pm)','📖 Tilawah (9pm)'],
-    Fri:['🕌 Sabaq (7am)','🎓 Light review','🕌 Jumu\'ah (1pm)','💪 Gym/Rest (4pm)','🌙 Protected eve']
+    Fri:['🕌 Sabaq (7am)','🎓 Light review','🕌 Jumuʼah (1pm)','💪 Gym/Rest (4pm)','🌙 Protected eve']
   };
   const t=document.getElementById('sched-table');
   const today=new Date().getDay(); // 0=Sun,6=Sat
@@ -993,7 +989,7 @@ function setProjectMode(mode,btn){
   document.getElementById('project-mindmap-view').style.display=mode==='mindmap'?'block':'none';
   document.getElementById('project-add-view').style.display=mode==='add'?'block':'none';
   // Wait one frame so SVG is visible and has real clientWidth before rendering
-  if(mode==='mindmap') requestAnimationFrame(()=>requestAnimationFrame(renderMindmap));
+  if(mode==='mindmap') setTimeout(renderMindmap, 50);
 }
 
 // ═══════════════════════════════════════
@@ -1004,7 +1000,8 @@ function renderMindmap(){
   const lines=text.split('\n').filter(l=>l.trim());
   const svg=document.getElementById('mindmap-svg');
   // Force explicit size — clientWidth can be 0 if parent was just made visible
-  const W=svg.getBoundingClientRect().width||svg.parentElement.getBoundingClientRect().width||900;
+  const container=svg.closest('.panel-body')||svg.parentElement;
+  const W=Math.max(container?container.getBoundingClientRect().width-36:0, window.innerWidth-120, 400);
   const H=500;
   svg.setAttribute('viewBox','0 0 '+W+' '+H);
   svg.setAttribute('width',W);
@@ -1097,7 +1094,9 @@ async function expandNotes(){
   if(!val) return showNotif('Write some notes first');
   document.getElementById('notes-suggest').innerHTML='<span class="spinner"></span> Expanding...';
   const ans=await askClaude(`Malik wrote these study notes: "${val}". Add 3-4 key points he might have missed, a key formula or definition, and a real-world application. Format as bullet points.`,400);
-  document.getElementById('notes-suggest').innerHTML=ans.replace(/\n/g,'<br>');
+  const ns=document.getElementById('notes-suggest');
+  ns.innerHTML=ans.replace(/\n/g,'<br>');
+  ns.className='ai-box';
 }
 
 // ═══════════════════════════════════════
@@ -1169,7 +1168,7 @@ async function studyExplain(){
   const el=document.getElementById('study-answer');
   el.innerHTML='<span class="spinner"></span> Loading explanation...';
   el.className='ai-box loading';
-  const lm={'ELI5':'explain like I\'m 12, using everyday analogies','Student':'explain at university level with mathematical intuition','Deep Dive':'give a rigorous deep technical explanation with key equations'};
+  const lm={'ELI5':'explain like I am 12, using everyday analogies','Student':'explain at university level with mathematical intuition','Deep Dive':'give a rigorous deep technical explanation with key equations'};
   const ans=await askClaude(`Malik is a 1st year EEE student. Please ${lm[level]}: ${q}. Connect it to electrical engineering where possible.`,700);
   el.innerHTML=ans.replace(/\n/g,'<br>');
   el.className='ai-box';
@@ -1266,7 +1265,7 @@ const careerData={
       {t:'Master C Programming',d:'Pointers, memory management, bit manipulation. Foundation of everything embedded.'},
       {t:'Get an STM32 Board',d:'£10 STM32F4 Discovery. Write bare-metal code without Arduino libraries.'},
       {t:'Learn FreeRTOS',d:'Task scheduling, semaphores, queues. Every real product uses an RTOS.'},
-      {t:'Study Computer Architecture',d:'How CPUs work at register level. ARM\'s free Cortex-M programming guide.'},
+      {t:'Study Computer Architecture',d:'How CPUs work at register level. ARM’s free Cortex-M programming guide.'},
       {t:'Build 3 Portfolio Projects',d:'A driver library, an IoT sensor node, a motor controller. Ship all to GitHub.'},
       {t:'Contribute to Open Source',d:'zephyr-project or FreeRTOS on GitHub. Massive CV differentiator.'}
     ],
@@ -1327,7 +1326,7 @@ const careerData={
     companies:['Ericsson','Nokia','Vodafone','BT','GCHQ','Leonardo','Raytheon'],
     skills:['RF circuit design','Antenna theory','ADS/CST simulation','Python','Signal processing','MATLAB','VNA operation'],
     roadmap:[
-      {t:'Strong EM Theory',d:'Maxwell\'s equations, transmission lines, Smith chart. Your uni syllabus is key.'},
+      {t:'Strong EM Theory',d:'Maxwell’s equations, transmission lines, Smith chart. Your uni syllabus is key.'},
       {t:'Learn RF Simulation',d:'CST Studio (free student) or ADS. Simulate a patch antenna.'},
       {t:'Build an SDR Project',d:'£20 RTL-SDR dongle. Receive aircraft signals, decode FM radio.'},
       {t:'Study 5G NR Standard',d:'3GPP free specs + Sharetechnote.com. Shows employers you know current tech.'}
@@ -1340,7 +1339,7 @@ const careerData={
     ]
   },
   vlsi:{title:'VLSI & Semiconductor Design',icon:'🔬',color:'var(--orange)',
-    overview:'Designing the chips that power everything. Extremely specialised, highly paid, and there\'s a global shortage of talent.',
+    overview:'Designing the chips that power everything. Extremely specialised, highly paid, and there’s a global shortage of talent.',
     salaryUK:'£45k–£120k',
     companies:['ARM','Intel','TSMC','Imagination Technologies','Graphcore','Qualcomm','Analog Devices'],
     skills:['Verilog/VHDL','FPGA','CMOS design','Cadence/Synopsys','SPICE simulation','Digital logic','Timing analysis'],
@@ -1348,7 +1347,7 @@ const careerData={
       {t:'Master Digital Logic',d:'Boolean algebra, flip-flops, FSMs. Your Year 1 digital electronics module.'},
       {t:'Learn Verilog',d:'HDL for hardware description. Free: nandland.com + iverilog simulator.'},
       {t:'Get an FPGA',d:'£30 Arty A7 or Basys 3. Implement a CPU from scratch on it.'},
-      {t:'Study CMOS Fundamentals',d:'Razavi\'s Design of Analog CMOS ICs — free online first edition.'}
+      {t:'Study CMOS Fundamentals',d:'Razavi’s Design of Analog CMOS ICs — free online first edition.'}
     ],
     resources:[
       {type:'Book',name:'Verilog HDL (Palnitkar)',desc:'Best Verilog textbook for beginners'},
@@ -1381,7 +1380,7 @@ const careerData={
     companies:['II-VI','Coherent','Lumentum','Leonardo','BAE Systems','Huawei Research','Google Quantum AI'],
     skills:['Photonics','Optics','COMSOL','Fibre optics','Laser systems','Python','Signal processing'],
     roadmap:[
-      {t:'Study Electromagnetic Waves',d:'Maxwell\'s equations, wave optics, polarisation. Your EM module is the foundation.'},
+      {t:'Study Electromagnetic Waves',d:'Maxwell’s equations, wave optics, polarisation. Your EM module is the foundation.'},
       {t:'Learn COMSOL Multiphysics',d:'Free student trial. Simulate optical waveguides and photonic structures.'},
       {t:'Fibre Optics Project',d:'Buy a fibre optic kit (£30) and measure attenuation, bending loss.'}
     ],
@@ -1427,7 +1426,7 @@ function showCareerDetail(id){
   const detail=document.getElementById('career-detail-view');
   detail.classList.add('active');
   document.getElementById('career-detail-title').textContent=career.icon+' '+career.title;
-  detail.querySelector('#career-detail-content').innerHTML=`
+  document.getElementById('career-detail-content').innerHTML=`
     <div class="grid-2" style="margin-bottom:14px">
       <div class="panel">
         <div class="panel-header"><span class="panel-title">Overview</span></div>
@@ -1453,7 +1452,7 @@ function showCareerDetail(id){
     <div class="panel" style="margin-bottom:14px">
       <div class="panel-header">
         <span class="panel-title">Your Roadmap — Step by Step</span>
-        <button class="btn btn-gold btn-sm" onclick="aiCareerAdvice('${id}')">⚡ AI PERSONALISE THIS</button>
+        <button class="btn btn-gold btn-sm" id="career-ai-btn">⚡ AI PERSONALISE THIS</button>
       </div>
       <div class="panel-body">
         <div style="display:flex;flex-direction:column;gap:3px">
@@ -1479,7 +1478,13 @@ function showCareerDetail(id){
         </div>
       </div>
     </div>`;
+  // Wire up AI button after DOM injection
+  setTimeout(()=>{
+    const btn=document.getElementById('career-ai-btn');
+    if(btn) btn.addEventListener('click',()=>aiCareerAdvice(id));
+  },0);
 }
+
 async function aiCareerAdvice(careerId){
   const career=careerData[careerId];
   const el=document.getElementById('career-ai-advice');
