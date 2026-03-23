@@ -531,13 +531,7 @@ select.os-input{cursor:pointer;}
         </div>
       </div>
 
-      <!-- WEEKLY SCHEDULE -->
-      <div class="panel">
-        <div class="panel-header"><span class="panel-title">📅 This Week — Department Rotation</span></div>
-        <div class="panel-body" style="overflow-x:auto">
-          <table class="sched-table" id="sched-table"></table>
-        </div>
-      </div>
+
     </div>
 
     <!-- ══════════════════════════════
@@ -638,6 +632,9 @@ select.os-input{cursor:pointer;}
               <button class="btn btn-gold" onclick="aiExpandIdea()">⚡ AI EXPAND IDEA</button>
             </div>
             <div class="ai-box" id="idea-expand-result" style="margin-top:12px;min-height:80px;display:none"></div>
+            <div style="margin-top:8px" id="idea-save-ai-row" style="display:none">
+              <button class="btn btn-teal btn-sm" onclick="saveAISuggestionAsIdea()">💾 SAVE AI SUGGESTION AS IDEA</button>
+            </div>
           </div>
         </div>
       </div>
@@ -661,7 +658,19 @@ select.os-input{cursor:pointer;}
             <button class="btn btn-lime" onclick="studyExplain()">EXPLAIN ►</button>
           </div>
           <div class="ai-box" id="study-answer" style="min-height:100px">Ask anything — concepts, intuition, applications, maths behind it...</div>
+          <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+            <input type="text" class="os-input" id="concept-save-name" placeholder="Concept name to save..." style="flex:1;font-size:11px">
+            <button class="btn btn-teal btn-sm" onclick="saveConceptNote()">💾 SAVE TO CONCEPTS</button>
+          </div>
         </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">📚 Saved Concepts</span>
+          <button class="btn btn-lime btn-sm" onclick="toggleSavedConcepts()">SHOW/HIDE</button>
+        </div>
+        <div id="saved-concepts-container" style="display:none;padding:14px"></div>
       </div>
 
       <div class="panel">
@@ -782,15 +791,15 @@ select.os-input{cursor:pointer;}
 
       <div class="panel">
         <div class="panel-header">
-          <span class="panel-title">📈 Weight Progress Chart</span>
+          <span class="panel-title">📈 Weight Progress — Per Exercise</span>
           <div style="display:flex;gap:6px;align-items:center">
-            <select class="os-input" id="chart-exercise" style="width:200px;font-size:10px"></select>
-            <button class="btn btn-lime btn-sm" onclick="renderProgressChart()">SHOW ►</button>
+            <select class="os-input" id="chart-exercise" style="width:220px;font-size:10px" onchange="renderProgressChart()"></select>
           </div>
         </div>
-        <div class="panel-body">
-          <canvas id="progress-chart" height="200" style="width:100%;background:var(--s2);border:1px solid var(--border)"></canvas>
-          <div id="chart-empty" style="color:var(--muted2);font-size:12px;text-align:center;padding:20px">Log sessions to see your progress</div>
+        <div class="panel-body" style="padding:10px 18px 18px">
+          <div id="gym-chart-wrap">
+            <div style="color:var(--muted2);font-size:12px;text-align:center;padding:30px">Log a session to start tracking weight progress</div>
+          </div>
         </div>
       </div>
     </div>
@@ -850,6 +859,16 @@ select.os-input{cursor:pointer;}
             <button class="btn btn-gold" onclick="generateHustleIdeas()">GENERATE ►</button>
           </div>
           <div class="ai-box" id="hustle-ideas" style="min-height:110px">Enter your skills and available time, then generate personalised hustle ideas...</div>
+          <div style="margin-top:8px">
+            <button class="btn btn-teal btn-sm" onclick="saveHustleIdeas()">💾 SAVE THESE IDEAS</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">💾 Saved Hustle Ideas</span></div>
+        <div class="panel-body" id="saved-hustle-container">
+          <div style="color:var(--muted2);font-size:12px;text-align:center;padding:10px">No saved ideas yet</div>
         </div>
       </div>
 
@@ -862,6 +881,9 @@ select.os-input{cursor:pointer;}
             <button class="btn btn-violet" onclick="analyseBusinessIdea()">⚡ ANALYSE IDEA</button>
           </div>
           <div class="ai-box" id="business-analysis" style="margin-top:12px;min-height:80px;display:none"></div>
+          <div style="margin-top:8px">
+            <button class="btn btn-teal btn-sm" onclick="saveBusinessAnalysis()">💾 SAVE ANALYSIS</button>
+          </div>
         </div>
       </div>
 
@@ -908,10 +930,28 @@ select.os-input{cursor:pointer;}
       <h2>THIS <span style="color:var(--lime)">WEEK</span></h2>
       <div class="panel">
         <div class="panel-header">
-          <span class="panel-title">Daily Habits — Week of 21 Mar 2026</span>
-          <button class="btn btn-lime btn-sm" onclick="resetHabits()">RESET WEEK</button>
+          <span class="panel-title" id="habits-week-title">Daily Habits — This Week</span>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-teal btn-sm" onclick="logWeek()">📋 LOG WEEK</button>
+            <button class="btn btn-lime btn-sm" onclick="resetHabits()">RESET WEEK</button>
+          </div>
         </div>
         <div class="panel-body" id="habits-container"></div>
+        <div id="habits-log-container" style="padding:0 18px 18px"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">📈 Weekly Habit Performance — Line Diagram</span>
+          <select class="os-input" id="habit-chart-select" style="width:200px;font-size:10px" onchange="renderHabitChart()">
+            <option value="all">All Habits (Mean %)</option>
+          </select>
+        </div>
+        <div class="panel-body" style="padding:10px 18px 18px">
+          <div id="habit-chart-wrap">
+            <div style="color:var(--muted2);font-size:12px;text-align:center;padding:30px">Log weeks to see your habit performance trend</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1053,7 +1093,6 @@ function buildSchedule() {
     '<td>' + s[d].map(x => '<div class="sched-block">' + x + '</div>').join('') + '</td>'
   ).join('') + '</tr>';
 }
-buildSchedule();
 
 // ── HOME QUICK ASK ───────────────────────────────────────────────
 async function quickAsk() {
@@ -2199,6 +2238,435 @@ async function resetHabits() {
 }
 
 loadHabits();
+
+// ══════════════════════════════════════════════════════════════════
+// SAVE AI SUGGESTIONS — Projects, Curiosity, Hustle
+// ══════════════════════════════════════════════════════════════════
+
+function saveAISuggestionAsIdea() {
+  const aiText = document.getElementById('idea-expand-result').innerText.trim();
+  const title = document.getElementById('idea-title').value.trim() || 'AI Suggestion ' + new Date().toLocaleDateString('en-GB');
+  if(!aiText || aiText.includes('Add a title first')) { showNotif('Generate an AI suggestion first'); return; }
+  ideas.unshift({ id: Date.now(), title, description: aiText.substring(0, 300), category: document.getElementById('idea-cat').value, priority: 'High', created_at: new Date().toISOString() });
+  localStorage.setItem('malik-ideas', JSON.stringify(ideas));
+  renderIdeas();
+  updateStats();
+  showNotif('AI suggestion saved as idea: ' + title);
+  // Show the save button after AI responds
+  const row = document.getElementById('idea-save-ai-row');
+  if(row) row.style.display = 'block';
+}
+
+// Show save button when AI expands idea
+const _origAiExpandIdea = window.aiExpandIdea;
+
+// Curiosity — save concept notes
+function saveConceptNote() {
+  const name = document.getElementById('concept-save-name').value.trim();
+  const text = document.getElementById('study-answer').innerText.trim();
+  const q = document.getElementById('study-q').value.trim();
+  const saveName = name || q || 'Concept ' + new Date().toLocaleDateString('en-GB');
+  if(!text || text.includes('Ask anything')) { showNotif('Generate an explanation first'); return; }
+  const concepts = JSON.parse(localStorage.getItem('malik-concepts') || '{}');
+  concepts[saveName] = { text, date: new Date().toLocaleDateString('en-GB'), level: document.getElementById('study-level').value };
+  localStorage.setItem('malik-concepts', JSON.stringify(concepts));
+  renderSavedConcepts();
+  document.getElementById('concept-save-name').value = '';
+  showNotif('Concept saved: ' + saveName);
+}
+
+function toggleSavedConcepts() {
+  const c = document.getElementById('saved-concepts-container');
+  if(!c) return;
+  const isHidden = c.style.display === 'none' || !c.style.display;
+  c.style.display = isHidden ? 'block' : 'none';
+  if(isHidden) renderSavedConcepts();
+}
+
+function renderSavedConcepts() {
+  const c = document.getElementById('saved-concepts-container');
+  if(!c) return;
+  const concepts = JSON.parse(localStorage.getItem('malik-concepts') || '{}');
+  const keys = Object.keys(concepts);
+  if(!keys.length) { c.innerHTML = '<div style="color:var(--muted2);font-size:12px;text-align:center;padding:10px">No saved concepts yet</div>'; return; }
+  c.innerHTML = keys.map(k => {
+    const cn = concepts[k];
+    return '<div style="border:1px solid var(--border);background:var(--s2);padding:12px;margin-bottom:8px">' +
+      '<div style="display:flex;justify-content:space-between;margin-bottom:6px">' +
+        '<strong style="color:var(--lime)">' + k + '</strong>' +
+        '<div style="display:flex;gap:6px;align-items:center">' +
+          '<span style="font-size:9px;color:var(--muted)">' + cn.date + ' · ' + cn.level + '</span>' +
+          '<button class="icon-btn" onclick="deleteConcept('' + k.replace(/'/g,"\'") + '')">✕</button>' +
+        '</div>' +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--muted);line-height:1.7;max-height:100px;overflow:hidden">' + cn.text.substring(0,300) + '...</div>' +
+      '<button class="btn btn-lime btn-sm" style="margin-top:8px" onclick="expandConcept('' + k.replace(/'/g,"\'") + '')">READ FULL</button>' +
+    '</div>';
+  }).join('');
+}
+
+function expandConcept(name) {
+  const concepts = JSON.parse(localStorage.getItem('malik-concepts') || '{}');
+  const cn = concepts[name];
+  if(!cn) return;
+  document.getElementById('study-q').value = name;
+  document.getElementById('study-answer').innerHTML = cn.text.replace(/
+/g,'<br>');
+  document.getElementById('study-answer').className = 'ai-box';
+}
+
+function deleteConcept(name) {
+  const concepts = JSON.parse(localStorage.getItem('malik-concepts') || '{}');
+  delete concepts[name];
+  localStorage.setItem('malik-concepts', JSON.stringify(concepts));
+  renderSavedConcepts();
+  showNotif('Concept deleted');
+}
+
+// Hustle — save ideas
+function saveHustleIdeas() {
+  const text = document.getElementById('hustle-ideas').innerText.trim();
+  if(!text || text.includes('Enter your skills')) { showNotif('Generate ideas first'); return; }
+  const skills = document.getElementById('hustle-skill').value.trim();
+  const key = (skills || 'Session') + ' — ' + new Date().toLocaleDateString('en-GB');
+  const saved = JSON.parse(localStorage.getItem('malik-hustle-saved') || '{}');
+  saved[key] = { text, date: new Date().toLocaleDateString('en-GB') };
+  localStorage.setItem('malik-hustle-saved', JSON.stringify(saved));
+  renderSavedHustle();
+  showNotif('Hustle ideas saved');
+}
+
+function saveBusinessAnalysis() {
+  const text = document.getElementById('business-analysis').innerText.trim();
+  const idea = document.getElementById('business-idea-input').value.trim();
+  if(!text || !idea) { showNotif('Analyse a business idea first'); return; }
+  const key = idea.substring(0,40) + '... — ' + new Date().toLocaleDateString('en-GB');
+  const saved = JSON.parse(localStorage.getItem('malik-hustle-saved') || '{}');
+  saved[key] = { text, date: new Date().toLocaleDateString('en-GB') };
+  localStorage.setItem('malik-hustle-saved', JSON.stringify(saved));
+  renderSavedHustle();
+  showNotif('Business analysis saved');
+}
+
+function renderSavedHustle() {
+  const c = document.getElementById('saved-hustle-container');
+  if(!c) return;
+  const saved = JSON.parse(localStorage.getItem('malik-hustle-saved') || '{}');
+  const keys = Object.keys(saved);
+  if(!keys.length) { c.innerHTML = '<div style="color:var(--muted2);font-size:12px;text-align:center;padding:10px">No saved ideas yet</div>'; return; }
+  c.innerHTML = keys.reverse().map(k => {
+    const s = saved[k];
+    return '<div style="border:1px solid var(--border);background:var(--s2);padding:12px;margin-bottom:8px">' +
+      '<div style="display:flex;justify-content:space-between;margin-bottom:6px">' +
+        '<strong style="font-size:11px;color:var(--teal)">' + k + '</strong>' +
+        '<button class="icon-btn" onclick="deleteHustleSave('' + k.replace(/'/g,"\'") + '')">✕</button>' +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--muted);line-height:1.7;max-height:80px;overflow:hidden">' + s.text.substring(0,250) + '...</div>' +
+    '</div>';
+  }).join('');
+}
+
+function deleteHustleSave(key) {
+  const saved = JSON.parse(localStorage.getItem('malik-hustle-saved') || '{}');
+  delete saved[key];
+  localStorage.setItem('malik-hustle-saved', JSON.stringify(saved));
+  renderSavedHustle();
+}
+
+// Init saved hustle on load
+renderSavedHustle();
+
+// ══════════════════════════════════════════════════════════════════
+// GYM PROGRESS CHART — SVG line graph (always uses local session data)
+// ══════════════════════════════════════════════════════════════════
+function populateChartExerciseSelect() {
+  const sel = document.getElementById('chart-exercise');
+  if(!sel) return;
+  const opts = ['<option value="">— Select exercise —</option>'];
+  Object.entries(gymDays).forEach(([d, day]) => {
+    day.ex.forEach((ex, i) => {
+      opts.push('<option value="' + d + '-' + i + '">D' + d + ': ' + ex[0] + '</option>');
+    });
+  });
+  sel.innerHTML = opts.join('');
+}
+
+function renderProgressChart() {
+  const sel = document.getElementById('chart-exercise');
+  const wrap = document.getElementById('gym-chart-wrap');
+  if(!sel || !wrap) return;
+  const val = sel.value;
+  if(!val) { wrap.innerHTML = '<div style="color:var(--muted2);font-size:12px;text-align:center;padding:30px">Select an exercise above</div>'; return; }
+
+  // Gather data from local session log
+  const sessions = JSON.parse(localStorage.getItem('malik-gym-sessions-local') || '[]');
+  const [dayNum, exIdx] = val.split('-');
+  const points = sessions
+    .filter(s => s.day == dayNum && s.weights && s.weights[val] !== undefined)
+    .map(s => ({ date: new Date(s.logged_at), weight: parseFloat(s.weights[val]) || 0 }))
+    .filter(p => p.weight > 0)
+    .sort((a,b) => a.date - b.date);
+
+  const exName = gymDays[parseInt(dayNum)]?.ex[parseInt(exIdx)]?.[0] || 'Exercise';
+
+  if(!points.length) {
+    wrap.innerHTML = '<div style="color:var(--muted2);font-size:12px;text-align:center;padding:30px">No weight data for <strong style="color:var(--lime)">' + exName + '</strong> yet.<br>Log a session with weights filled in to start tracking.</div>';
+    return;
+  }
+
+  drawLineChart(wrap, points, exName, '#c8ff00');
+}
+
+function drawLineChart(container, points, label, color) {
+  const W = container.getBoundingClientRect().width || 700;
+  const H = 280;
+  const pad = { t:30, r:20, b:50, l:55 };
+  const cW = W - pad.l - pad.r;
+  const cH = H - pad.t - pad.b;
+
+  const vals = points.map(p => p.weight);
+  const minV = Math.min(...vals) * 0.92;
+  const maxV = Math.max(...vals) * 1.08 || minV + 10;
+  const range = maxV - minV || 1;
+
+  const px = (i) => pad.l + (i / Math.max(points.length - 1, 1)) * cW;
+  const py = (v) => pad.t + cH - ((v - minV) / range) * cH;
+
+  let svg = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" style="font-family:Space Mono,monospace;display:block">';
+
+  // Background
+  svg += '<rect width="' + W + '" height="' + H + '" fill="#0e0e12" rx="4"/>';
+
+  // Grid lines & Y labels
+  const ySteps = 5;
+  for(let i=0;i<=ySteps;i++) {
+    const v = minV + (range * i/ySteps);
+    const y = py(v);
+    svg += '<line x1="' + pad.l + '" y1="' + y + '" x2="' + (W-pad.r) + '" y2="' + y + '" stroke="#1e1e26" stroke-width="1"/>';
+    svg += '<text x="' + (pad.l-6) + '" y="' + (y+4) + '" text-anchor="end" font-size="9" fill="#5a5a72">' + v.toFixed(1) + 'kg</text>';
+  }
+
+  // Area fill under line
+  if(points.length > 1) {
+    let areaPath = 'M ' + px(0) + ' ' + py(points[0].weight);
+    points.forEach((p,i) => { if(i>0) areaPath += ' L ' + px(i) + ' ' + py(p.weight); });
+    areaPath += ' L ' + px(points.length-1) + ' ' + (pad.t+cH) + ' L ' + pad.l + ' ' + (pad.t+cH) + ' Z';
+    svg += '<path d="' + areaPath + '" fill="' + color + '" fill-opacity="0.07"/>';
+  }
+
+  // Line
+  if(points.length > 1) {
+    let linePath = 'M ' + px(0) + ' ' + py(points[0].weight);
+    points.forEach((p,i) => { if(i>0) linePath += ' L ' + px(i) + ' ' + py(p.weight); });
+    svg += '<path d="' + linePath + '" fill="none" stroke="' + color + '" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
+  }
+
+  // Dots + X labels + value tooltips
+  points.forEach((p, i) => {
+    const x = px(i), y = py(p.weight);
+    const dateStr = p.date.toLocaleDateString('en-GB', {day:'numeric',month:'short'});
+    // X label
+    svg += '<text x="' + x + '" y="' + (H-8) + '" text-anchor="middle" font-size="8" fill="#5a5a72">' + dateStr + '</text>';
+    // Value above dot
+    svg += '<text x="' + x + '" y="' + (y-10) + '" text-anchor="middle" font-size="9" fill="' + color + '" font-weight="700">' + p.weight + 'kg</text>';
+    // Outer glow ring
+    svg += '<circle cx="' + x + '" cy="' + y + '" r="7" fill="#0e0e12" stroke="' + color + '" stroke-width="1" stroke-opacity="0.3"/>';
+    // Dot
+    svg += '<circle cx="' + x + '" cy="' + y + '" r="4" fill="' + color + '"/>';
+  });
+
+  // Title
+  svg += '<text x="' + (W/2) + '" y="18" text-anchor="middle" font-size="10" fill="' + color + '" font-weight="700" letter-spacing="1">' + label.toUpperCase() + '</text>';
+
+  svg += '</svg>';
+  container.innerHTML = svg;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// HABITS — LOG WEEK + LINE CHART
+// ══════════════════════════════════════════════════════════════════
+function updateHabitsTitle() {
+  const el = document.getElementById('habits-week-title');
+  if(!el) return;
+  const now = new Date();
+  const day = now.getDay();
+  const diff = day === 6 ? 0 : (day + 1);
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - diff);
+  el.textContent = 'Daily Habits — Week of ' + weekStart.toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'});
+}
+updateHabitsTitle();
+
+const habitNames = ['Sabaq','Sabqi+Manzil','Tilawah','Anki','Uni Notes','Project Lab','Curiosity Lab','Gym','Sport'];
+
+function logWeek() {
+  const total = Object.values(habitState).filter(Boolean).length;
+  const maxPossible = 9 * 7;
+  const pct = Math.round((total / maxPossible) * 100);
+  const now = new Date();
+  const day = now.getDay();
+  const diff = day === 6 ? 0 : (day + 1);
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - diff);
+  const weekLabel = weekStart.toLocaleDateString('en-GB', {day:'numeric',month:'short'});
+  const weekISO = weekStart.toISOString().split('T')[0];
+
+  // Per-habit daily means (days done / 7)
+  const breakdown = {};
+  habitNames.forEach((name, hi) => {
+    const done = [0,1,2,3,4,5,6].filter(di => habitState[hi+'-'+di]).length;
+    breakdown[name] = done;
+  });
+
+  const log = JSON.parse(localStorage.getItem('malik-habits-log') || '[]');
+  const existing = log.findIndex(w => w.weekISO === weekISO);
+  const entry = { week: weekLabel, weekISO, score: total, pct, breakdown, logged: new Date().toISOString() };
+  if(existing >= 0) log[existing] = entry;
+  else log.unshift(entry);
+  localStorage.setItem('malik-habits-log', JSON.stringify(log.slice(0,20)));
+
+  renderHabitsLog();
+  renderHabitChart();
+  populateHabitChartSelect();
+  showNotif('Week logged: ' + total + '/' + maxPossible + ' (' + pct + '%)');
+}
+
+function renderHabitsLog() {
+  const c = document.getElementById('habits-log-container');
+  if(!c) return;
+  const log = JSON.parse(localStorage.getItem('malik-habits-log') || '[]');
+  if(!log.length) { c.innerHTML = ''; return; }
+  c.innerHTML = '<div style="font-size:9px;letter-spacing:0.2em;color:var(--muted);text-transform:uppercase;margin-bottom:10px;padding-top:14px;border-top:1px solid var(--border)">WEEKLY LOG HISTORY</div>' +
+    log.map(w => {
+      const col = w.pct >= 80 ? 'var(--lime)' : w.pct >= 60 ? 'var(--gold)' : 'var(--orange)';
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">' +
+        '<div style="font-size:12px;font-weight:700">' + w.week + '</div>' +
+        '<div style="display:flex;gap:16px;align-items:center">' +
+          '<div style="font-size:11px;color:var(--muted)">' + w.score + '/63</div>' +
+          '<div style="font-family:var(--display);font-size:20px;color:' + col + '">' + w.pct + '%</div>' +
+        '</div></div>';
+    }).join('');
+}
+
+function populateHabitChartSelect() {
+  const sel = document.getElementById('habit-chart-select');
+  if(!sel) return;
+  sel.innerHTML = '<option value="all">All Habits (Mean %)</option>' +
+    habitNames.map((n,i) => '<option value="' + i + '">' + n + '</option>').join('');
+}
+
+function renderHabitChart() {
+  const wrap = document.getElementById('habit-chart-wrap');
+  const sel = document.getElementById('habit-chart-select');
+  if(!wrap) return;
+
+  const log = JSON.parse(localStorage.getItem('malik-habits-log') || '[]').slice().reverse(); // oldest first
+  if(!log.length) {
+    wrap.innerHTML = '<div style="color:var(--muted2);font-size:12px;text-align:center;padding:30px">Log weeks to see your habit performance trend</div>';
+    return;
+  }
+
+  const mode = sel ? sel.value : 'all';
+
+  let points;
+  if(mode === 'all') {
+    // Mean % across all habits per week
+    points = log.map(w => ({ date: new Date(w.weekISO || Date.now()), weight: w.pct, label: w.week }));
+  } else {
+    // Specific habit — days done / 7 * 100
+    const hi = parseInt(mode);
+    points = log.map(w => {
+      const done = w.breakdown ? (w.breakdown[habitNames[hi]] || 0) : 0;
+      return { date: new Date(w.weekISO || Date.now()), weight: Math.round((done/7)*100), label: w.week };
+    });
+  }
+
+  // Use drawLineChart but with % labels
+  drawHabitLineChart(wrap, points, mode === 'all' ? 'Overall Habit Score' : habitNames[parseInt(mode)]);
+}
+
+function drawHabitLineChart(container, points, label) {
+  const W = container.getBoundingClientRect().width || 700;
+  const H = 280;
+  const pad = { t:30, r:20, b:50, l:50 };
+  const cW = W - pad.l - pad.r;
+  const cH = H - pad.t - pad.b;
+  const color = '#c8ff00';
+
+  const vals = points.map(p => p.weight);
+  const minV = 0;
+  const maxV = 100;
+  const range = 100;
+
+  const px = (i) => pad.l + (i / Math.max(points.length-1,1)) * cW;
+  const py = (v) => pad.t + cH - (v/range)*cH;
+
+  let svg = '<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" style="font-family:Space Mono,monospace;display:block">';
+  svg += '<rect width="'+W+'" height="'+H+'" fill="#0e0e12" rx="4"/>';
+
+  // Grid lines
+  [0,25,50,75,100].forEach(v => {
+    const y = py(v);
+    const gridCol = v === 0 ? '#2a2a36' : '#1e1e26';
+    svg += '<line x1="'+pad.l+'" y1="'+y+'" x2="'+(W-pad.r)+'" y2="'+y+'" stroke="'+gridCol+'" stroke-width="'+(v===0?1.5:1)+'"/>';
+    svg += '<text x="'+(pad.l-6)+'" y="'+(y+4)+'" text-anchor="end" font-size="9" fill="#5a5a72">'+v+'%</text>';
+  });
+
+  // Colour zones
+  svg += '<rect x="'+pad.l+'" y="'+py(80)+'" width="'+cW+'" height="'+(py(0)-py(80))+'" fill="#c8ff00" fill-opacity="0.03"/>';
+  svg += '<rect x="'+pad.l+'" y="'+py(60)+'" width="'+cW+'" height="'+(py(80)-py(60))+'" fill="#fbbf24" fill-opacity="0.03"/>';
+  svg += '<rect x="'+pad.l+'" y="'+py(0)+'" width="'+cW+'" height="'+(py(60)-py(0))+'" fill="#ff5500" fill-opacity="0.03"/>';
+
+  if(points.length > 1) {
+    // Area
+    let area = 'M '+px(0)+' '+py(points[0].weight);
+    points.forEach((p,i) => { if(i>0) area += ' L '+px(i)+' '+py(p.weight); });
+    area += ' L '+px(points.length-1)+' '+py(0)+' L '+px(0)+' '+py(0)+' Z';
+    svg += '<path d="'+area+'" fill="'+color+'" fill-opacity="0.08"/>';
+    // Line
+    let line = 'M '+px(0)+' '+py(points[0].weight);
+    points.forEach((p,i) => { if(i>0) line += ' L '+px(i)+' '+py(p.weight); });
+    svg += '<path d="'+line+'" fill="none" stroke="'+color+'" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
+  }
+
+  points.forEach((p,i) => {
+    const x=px(i), y=py(p.weight);
+    const col = p.weight>=80?'#c8ff00':p.weight>=60?'#fbbf24':'#ff5500';
+    svg += '<text x="'+x+'" y="'+(H-8)+'" text-anchor="middle" font-size="8" fill="#5a5a72">'+p.label+'</text>';
+    svg += '<text x="'+x+'" y="'+(y-10)+'" text-anchor="middle" font-size="9" fill="'+col+'" font-weight="700">'+p.weight+'%</text>';
+    svg += '<circle cx="'+x+'" cy="'+y+'" r="6" fill="#0e0e12" stroke="'+col+'" stroke-width="1.5"/>';
+    svg += '<circle cx="'+x+'" cy="'+y+'" r="3.5" fill="'+col+'"/>';
+  });
+
+  svg += '<text x="'+(W/2)+'" y="18" text-anchor="middle" font-size="10" fill="'+color+'" font-weight="700" letter-spacing="1">'+label.toUpperCase()+'</text>';
+  svg += '</svg>';
+  container.innerHTML = svg;
+}
+
+// ── patch logGymSession to save locally for chart ─────────────────
+const _origLogGym = logGymSession;
+async function logGymSession() {
+  // Save weights snapshot locally for chart (backend may not have this data)
+  const localSessions = JSON.parse(localStorage.getItem('malik-gym-sessions-local') || '[]');
+  const snap = {};
+  gymDays[curGymDay].ex.forEach((_,i) => {
+    const key = curGymDay + '-' + i;
+    if(gymWeights[key]) snap[key] = gymWeights[key];
+  });
+  localSessions.unshift({ day: curGymDay, weights: snap, logged_at: new Date().toISOString() });
+  localStorage.setItem('malik-gym-sessions-local', JSON.stringify(localSessions.slice(0,50)));
+  // Call original
+  await _origLogGym();
+  // Refresh chart if visible
+  const sel = document.getElementById('chart-exercise');
+  if(sel && sel.value) renderProgressChart();
+}
+
+// Init on page load
+populateHabitChartSelect();
+renderHabitsLog();
+setTimeout(() => { renderHabitChart(); }, 200);
+
 
 // ── STATS ────────────────────────────────────────────────────────
 function updateStats() {
