@@ -2,9 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MALIK·OS — Personal Command Intelligence</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
@@ -460,7 +457,7 @@ select.os-input{cursor:pointer;}
 
 <!-- TOP BAR -->
 <div class="topbar">
-  <div class="topbar-logo">MALIK<span>·</span>OS</div>
+  <div class="topbar-logo" onclick="showPage('home')" style="cursor:pointer">MALIK<span>·</span>OS</div>
   <div class="topbar-nav">
     <button class="nav-btn active" onclick="showPage('home')">HOME</button>
     <button class="nav-btn" onclick="showPage('projects')">PROJECTS</button>
@@ -473,10 +470,8 @@ select.os-input{cursor:pointer;}
     <button class="nav-btn" onclick="showPage('habits')">HABITS</button>
   </div>
   <div class="topbar-right">
-    <input type="password" id="api-key-input" placeholder="Paste Claude API key...">
-    <button id="api-key-btn" onclick="saveApiKey()">CONNECT AI</button>
-    <button style="padding:5px 10px;background:transparent;border:1px solid var(--muted2);color:var(--muted);font-family:var(--mono);font-size:9px;cursor:pointer;letter-spacing:0.1em;" onclick="testAI()" title="Test AI connection">TEST</button>
-    <div class="status-dot" id="ai-status-dot"></div>
+    <div id="ai-status-dot" class="status-dot live" title="AI Online via Railway"></div>
+    <div style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:0.08em;border:1px solid var(--border2);padding:4px 10px;background:var(--s1)" id="topbar-date">—</div>
     <div class="topbar-time" id="clock">--:--:--</div>
   </div>
 </div>
@@ -531,7 +526,7 @@ select.os-input{cursor:pointer;}
             <button class="btn btn-lime" onclick="quickAsk()">ASK ►</button>
           </div>
           <div class="ai-box" id="quick-answer" style="min-height:60px;margin-top:12px">
-            <em style="color:var(--muted2)">Connect your Claude API key above, then ask anything...</em>
+            <em style="color:var(--muted2)">Ask anything — AI is online via Railway...</em>
           </div>
         </div>
       </div>
@@ -561,17 +556,12 @@ select.os-input{cursor:pointer;}
       <!-- LIST VIEW -->
       <div id="project-list-view">
         <div class="panel">
-          <div class="panel-header"><span class="panel-title">Active Projects</span></div>
+          <div class="panel-header">
+            <span class="panel-title">Active Projects</span>
+            <button class="btn btn-lime btn-sm" onclick="setProjectMode('add',document.querySelectorAll('.mode-btn')[2])">+ NEW PROJECT</button>
+          </div>
           <div class="panel-body" id="projects-container">
-            <div class="project-card">
-              <div>
-                <div class="project-card-title">LED Matrix Display</div>
-                <div class="project-card-desc">Arduino-driven 8×8 LED matrix with Bluetooth control. Covers GPIO, PWM, serial comms.</div>
-                <div style="margin-top:8px"><span class="tag tag-lime">Month 1</span><span class="tag tag-gold">EEE</span><span class="tag tag-teal">Hardware</span></div>
-                <div class="prog-track"><div class="prog-fill" style="width:20%"></div></div>
-              </div>
-              <div><span class="tag tag-lime">BUILDING</span></div>
-            </div>
+            <div style="color:var(--muted2);font-size:12px;text-align:center;padding:20px">No projects yet — click + NEW PROJECT to add one</div>
           </div>
         </div>
         <div class="panel">
@@ -586,12 +576,26 @@ select.os-input{cursor:pointer;}
       <div id="project-mindmap-view" style="display:none">
         <div class="panel">
           <div class="panel-header">
-            <span class="panel-title">Idea Mind Map — indent with Tab for sub-ideas</span>
-            <button class="btn btn-lime btn-sm" onclick="renderMindmap()">RENDER ►</button>
+            <span class="panel-title">Idea Mind Map — Tab to indent, drag to pan, scroll to zoom</span>
+            <div style="display:flex;gap:6px;align-items:center">
+              <select class="os-input" id="mindmap-saved-select" style="width:160px;font-size:10px" onchange="loadSavedMindmap()">
+                <option value="">— Load saved map —</option>
+              </select>
+              <button class="btn btn-teal btn-sm" onclick="saveMindmap()">💾 SAVE</button>
+              <button class="btn btn-orange btn-sm" onclick="deleteSavedMindmap()" title="Delete selected map">🗑</button>
+            </div>
           </div>
           <div class="panel-body">
-            <textarea class="os-textarea" id="mindmap-text" placeholder="My Projects&#10;  LED Matrix Display&#10;    Arduino control&#10;    Bluetooth module&#10;    PCB design&#10;  Audio Spectrum Analyser&#10;    FFT algorithm&#10;    OLED display&#10;  PID Controller&#10;    Temperature sensor&#10;    Motor control" style="min-height:140px" id="mindmap-text-area" oninput="clearTimeout(window._mmTimer);window._mmTimer=setTimeout(renderMindmap,200)" onkeydown="handleMindmapTab(event)"></textarea>
-            <svg id="mindmap-svg" style="margin-top:10px"></svg>
+            <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
+              <input type="text" class="os-input" id="mindmap-name" placeholder="Map name e.g. PCB Projects..." style="flex:1;font-size:11px">
+              <button class="btn btn-lime btn-sm" onclick="mmZoom(1.2)">＋</button>
+              <button class="btn btn-lime btn-sm" onclick="mmZoom(0.8)">－</button>
+              <button class="btn btn-lime btn-sm" onclick="mmResetView()">⌖ RESET</button>
+            </div>
+            <textarea class="os-textarea" id="mindmap-text" placeholder="My Projects&#10;  LED Matrix Display&#10;    Arduino control&#10;    Bluetooth module&#10;    PCB design&#10;  Audio Spectrum Analyser&#10;    FFT algorithm&#10;    OLED display&#10;  PID Controller&#10;    Temperature sensor&#10;    Motor control" style="min-height:120px" oninput="clearTimeout(window._mmTimer);window._mmTimer=setTimeout(renderMindmap,200)" onkeydown="handleMindmapTab(event)"></textarea>
+            <div id="mindmap-canvas-wrap" style="margin-top:10px;overflow:hidden;border:1px solid var(--border);background:var(--s2);cursor:grab;position:relative" onmousedown="mmDragStart(event)" onmousemove="mmDragMove(event)" onmouseup="mmDragEnd()" onmouseleave="mmDragEnd()" onwheel="mmWheel(event)">
+              <svg id="mindmap-svg" style="display:block;transition:none"></svg>
+            </div>
           </div>
         </div>
       </div>
@@ -904,14 +908,10 @@ select.os-input{cursor:pointer;}
       <h2>THIS <span style="color:var(--lime)">WEEK</span></h2>
       <div class="panel">
         <div class="panel-header">
-          <span class="panel-title" id="habits-week-title">Daily Habits — This Week</span>
-          <div style="display:flex;gap:6px">
-            <button class="btn btn-teal btn-sm" onclick="logWeek()">📋 LOG WEEK</button>
-            <button class="btn btn-lime btn-sm" onclick="resetHabits()">RESET WEEK</button>
-          </div>
+          <span class="panel-title">Daily Habits — Week of 21 Mar 2026</span>
+          <button class="btn btn-lime btn-sm" onclick="resetHabits()">RESET WEEK</button>
         </div>
         <div class="panel-body" id="habits-container"></div>
-        <div id="habits-log-container" style="padding:0 18px 18px"></div>
       </div>
     </div>
 
@@ -926,11 +926,6 @@ select.os-input{cursor:pointer;}
 // ── CONFIG ────────────────────────────────────────────────────────
 // Set this to your Railway backend URL after deploying
 const API = 'https://malik-os-backend-production.up.railway.app';
-
-// ── GLOBAL STATE — declared early so nothing crashes on init ─────
-let habitState = {};
-let ideas = [];
-let modules = [];
 
 // ── API HELPER ────────────────────────────────────────────────────
 async function api(method, path, body) {
@@ -957,7 +952,16 @@ async function api(method, path, body) {
 
 // ── CLOCK ────────────────────────────────────────────────────────
 function updateClock() {
-  document.getElementById('clock').textContent = new Date().toLocaleTimeString('en-GB');
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('en-GB');
+  const dateEl = document.getElementById('topbar-date');
+  if(dateEl) {
+    const days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+    const d = String(now.getDate()).padStart(2,'0');
+    const m = String(now.getMonth()+1).padStart(2,'0');
+    const y = now.getFullYear();
+    dateEl.textContent = days[now.getDay()] + ' // ' + d + '.' + m + '.' + y;
+  }
 }
 setInterval(updateClock, 1000);
 updateClock();
@@ -1085,18 +1089,52 @@ function handleMindmapTab(e) {
   window._mmTimer = setTimeout(renderMindmap, 200);
 }
 
+// ── MINDMAP STATE ───────────────────────────────────────────────
+let mmScale = 1, mmPanX = 0, mmPanY = 0;
+let mmDragging = false, mmLastX = 0, mmLastY = 0;
+let mmFullW = 900, mmFullH = 560;
+
+function mmZoom(factor) {
+  mmScale = Math.min(3, Math.max(0.3, mmScale * factor));
+  applyMmTransform();
+}
+function mmResetView() { mmScale=1; mmPanX=0; mmPanY=0; applyMmTransform(); }
+function applyMmTransform() {
+  const svg = document.getElementById('mindmap-svg');
+  if(svg) svg.style.transform = 'translate('+mmPanX+'px,'+mmPanY+'px) scale('+mmScale+')';
+}
+function mmDragStart(e) {
+  mmDragging = true; mmLastX = e.clientX; mmLastY = e.clientY;
+  const wrap = document.getElementById('mindmap-canvas-wrap');
+  if(wrap) wrap.style.cursor = 'grabbing';
+}
+function mmDragMove(e) {
+  if(!mmDragging) return;
+  mmPanX += e.clientX - mmLastX;
+  mmPanY += e.clientY - mmLastY;
+  mmLastX = e.clientX; mmLastY = e.clientY;
+  applyMmTransform();
+}
+function mmDragEnd() {
+  mmDragging = false;
+  const wrap = document.getElementById('mindmap-canvas-wrap');
+  if(wrap) wrap.style.cursor = 'grab';
+}
+function mmWheel(e) {
+  e.preventDefault();
+  mmZoom(e.deltaY < 0 ? 1.1 : 0.9);
+}
+
 // ── MINDMAP RENDERER ────────────────────────────────────────────
 function renderMindmap() {
   const textarea = document.getElementById('mindmap-text');
   const svg = document.getElementById('mindmap-svg');
-  if(!textarea || !svg) return;
+  const wrap = document.getElementById('mindmap-canvas-wrap');
+  if(!textarea || !svg || !wrap) return;
   const text = textarea.value.trim();
   if(!text) { svg.innerHTML = ''; return; }
 
-  const container = svg.closest('.panel-body') || svg.parentElement;
-  const W = Math.max(container ? container.getBoundingClientRect().width - 36 : 0, window.innerWidth - 120, 400);
-  const H = 520;
-
+  // Parse indented text into tree
   const lines = text.split('\n');
   const roots = [];
   const stack = [];
@@ -1110,62 +1148,155 @@ function renderMindmap() {
     else if(stack[level-1]) stack[level-1].children.push(node);
     stack.splice(level + 1);
   });
-
   if(!roots.length) { svg.innerHTML = ''; return; }
 
-  const colors = ['#c8ff00','#fbbf24','#00e5cc','#8b5cf6','#ff5500','#ff3d7f','#38bdf8','#00ff88'];
-  let pieces = ['<rect width="' + W + '" height="' + H + '" fill="#0e0e12" rx="4"/>'];
+  // Calculate layout dimensions dynamically
+  function countDepth(node) { return node.children.length ? 1 + Math.max(...node.children.map(countDepth)) : 0; }
+  function countLeaves(node) { return node.children.length ? node.children.reduce((s,c) => s+countLeaves(c), 0) : 1; }
+  const maxDepth = Math.max(...roots.map(countDepth));
+  const totalLeaves = roots.reduce((s,r) => s+countLeaves(r), 0);
+  const W = Math.max(wrap.getBoundingClientRect().width - 4 || 800, (maxDepth+1)*180 + 100);
+  const H = Math.max(Math.max(520, totalLeaves * 80), roots.length * 120);
+  mmFullW = W; mmFullH = H;
 
-  function wrapText(text, maxChars) {
-    const words = text.split(' ');
+  const colors = ['#c8ff00','#fbbf24','#00e5cc','#8b5cf6','#ff5500','#ff3d7f','#38bdf8','#00ff88'];
+  // Draw lines FIRST in a separate layer, then circles on top — fixes lines through circles
+  let linesPieces = [];
+  let nodesPieces = [];
+
+  function wrapText(txt, maxChars) {
+    const words = txt.split(' ');
     const ls = []; let cur = '';
     words.forEach(w => {
-      if((cur + (cur?' ':'') + w).length > maxChars && cur) { ls.push(cur); cur = w; }
-      else cur += (cur?' ':'') + w;
+      if((cur+(cur?' ':'')+w).length > maxChars && cur) { ls.push(cur); cur = w; }
+      else cur += (cur?' ':'')+w;
     });
     if(cur) ls.push(cur);
-    return ls.slice(0, 3);
+    return ls.slice(0,3);
   }
 
-  function drawNode(node, x, y, px, py, ci, depth) {
-    const col = colors[ci % colors.length];
-    const r = depth===0?38:depth===1?26:18;
-    const fs = depth===0?10:depth===1?9:8;
-    if(px !== null) {
-      const dash = depth > 1 ? 'stroke-dasharray="5,4"' : '';
-      pieces.push('<line x1="' + px + '" y1="' + py + '" x2="' + x + '" y2="' + y + '" stroke="' + col + '" stroke-width="' + (depth===1?2:1) + '" stroke-opacity="0.5" ' + dash + '/>');
-    }
-    pieces.push('<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + col + '1a" stroke="' + col + '" stroke-width="' + (depth===0?2:1) + '"/>');
-    const tls = wrapText(node.text, depth===0?10:12);
-    const lineH = fs + 3;
-    tls.forEach((ln, i) => {
-      const ty = y - (tls.length * lineH)/2 + i*lineH + fs;
-      pieces.push('<text x="' + x + '" y="' + ty + '" text-anchor="middle" font-family="Space Mono,monospace" font-size="' + fs + '" font-weight="700" fill="' + col + '">' + ln + '</text>');
-    });
+  function layoutNode(node, x, y, ci, depth) {
+    node._x = x; node._y = y; node._ci = ci; node._depth = depth;
     if(node.children.length) {
-      const childX = x + (depth===0?150:120);
-      const spread = Math.min(node.children.length * (depth===0?100:70), H * 0.8);
-      const spacing = spread / Math.max(node.children.length - 1, 1);
-      const startY = y - spread/2;
-      node.children.forEach((ch, i) => {
-        const cy = node.children.length === 1 ? y : startY + i * spacing;
-        drawNode(ch, childX, cy, x, y, ci+i+1, depth+1);
+      const childX = x + (depth===0?160:130);
+      const leavesPerChild = node.children.map(countLeaves);
+      const totalL = leavesPerChild.reduce((a,b)=>a+b,0);
+      const spreadH = Math.min(totalL * 75, H * 0.85);
+      let curY = y - spreadH/2;
+      node.children.forEach((ch,i) => {
+        const childH = (leavesPerChild[i]/totalL)*spreadH;
+        layoutNode(ch, childX, curY + childH/2, ci+i+1, depth+1);
+        curY += childH;
       });
     }
   }
 
-  const rowH = H / (roots.length + 1);
-  roots.forEach((root, i) => drawNode(root, 80, (i+1)*rowH, null, null, i*3, 0));
+  function drawLines(node) {
+    if(!node.children.length) return;
+    const col = colors[node._ci % colors.length];
+    node.children.forEach(ch => {
+      const dash = node._depth >= 1 ? 'stroke-dasharray="6,4"' : '';
+      const sw = node._depth===0?2:1;
+      // Line stops at the EDGE of parent circle, not centre — fixes overlap
+      const pr = node._depth===0?38:node._depth===1?26:18;
+      const cr = ch._depth===0?38:ch._depth===1?26:18;
+      const dx = ch._x - node._x, dy = ch._y - node._y;
+      const dist = Math.sqrt(dx*dx+dy*dy) || 1;
+      const x1 = node._x + (dx/dist)*pr;
+      const y1 = node._y + (dy/dist)*pr;
+      const x2 = ch._x - (dx/dist)*cr;
+      const y2 = ch._y - (dy/dist)*cr;
+      linesPieces.push('<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+col+'" stroke-width="'+sw+'" stroke-opacity="0.45" '+dash+'/>');
+      drawLines(ch);
+    });
+  }
 
-  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
-  svg.setAttribute('width', W);
-  svg.setAttribute('height', H);
-  svg.innerHTML = pieces.join('');
+  function drawCircles(node) {
+    const col = colors[node._ci % colors.length];
+    const r = node._depth===0?38:node._depth===1?26:18;
+    const fs = node._depth===0?11:node._depth===1?10:9;
+    // Filled background circle to mask any residual line behind it
+    nodesPieces.push('<circle cx="'+node._x+'" cy="'+node._y+'" r="'+r+'" fill="#0e0e12"/>');
+    nodesPieces.push('<circle cx="'+node._x+'" cy="'+node._y+'" r="'+r+'" fill="'+col+'18" stroke="'+col+'" stroke-width="'+(node._depth===0?2:1)+'"/>');
+    const tls = wrapText(node.text, node._depth===0?10:13);
+    const lineH = fs+3;
+    tls.forEach((ln,i) => {
+      const ty = node._y - (tls.length*lineH)/2 + i*lineH + fs;
+      nodesPieces.push('<text x="'+node._x+'" y="'+ty+'" text-anchor="middle" font-family="Space Mono,monospace" font-size="'+fs+'" font-weight="700" fill="'+col+'">'+ln+'</text>');
+    });
+    node.children.forEach(ch => drawCircles(ch));
+  }
+
+  // Layout all nodes
+  const rowH = H / (roots.length + 1);
+  roots.forEach((root,i) => layoutNode(root, 70, (i+1)*rowH, i*3, 0));
+  // Draw lines first (behind), then circles on top
+  roots.forEach(r => drawLines(r));
+  roots.forEach(r => drawCircles(r));
+
+  svg.setAttribute('viewBox','0 0 '+W+' '+H);
+  svg.setAttribute('width',W);
+  svg.setAttribute('height',H);
+  svg.style.transformOrigin = '0 0';
+  svg.innerHTML = '<rect width="'+W+'" height="'+H+'" fill="#0e0e12" rx="2"/>' + linesPieces.join('') + nodesPieces.join('');
+  applyMmTransform();
+
+  // Set wrap height
+  const wrapH = Math.min(Math.max(400, H*mmScale), window.innerHeight * 0.6);
+  wrap.style.height = wrapH + 'px';
 }
+
 window.addEventListener('resize', () => {
   const mv = document.getElementById('project-mindmap-view');
   if(mv && mv.style.display !== 'none') renderMindmap();
 });
+
+// ── MINDMAP SAVE/LOAD ────────────────────────────────────────────
+function getMindmaps() { return JSON.parse(localStorage.getItem('malik-mindmaps') || '{}'); }
+function saveMindmaps(maps) { localStorage.setItem('malik-mindmaps', JSON.stringify(maps)); }
+
+function saveMindmap() {
+  const name = document.getElementById('mindmap-name').value.trim() || 'Untitled ' + new Date().toLocaleDateString('en-GB');
+  const text = document.getElementById('mindmap-text').value.trim();
+  if(!text) { showNotif('Nothing to save'); return; }
+  const maps = getMindmaps();
+  maps[name] = text;
+  saveMindmaps(maps);
+  populateMindmapSelect();
+  showNotif('Mindmap saved: ' + name);
+}
+
+function loadSavedMindmap() {
+  const sel = document.getElementById('mindmap-saved-select').value;
+  if(!sel) return;
+  const maps = getMindmaps();
+  if(maps[sel]) {
+    document.getElementById('mindmap-text').value = maps[sel];
+    document.getElementById('mindmap-name').value = sel;
+    mmResetView();
+    renderMindmap();
+    showNotif('Loaded: ' + sel);
+  }
+}
+
+function deleteSavedMindmap() {
+  const sel = document.getElementById('mindmap-saved-select').value;
+  if(!sel) { showNotif('Select a map to delete'); return; }
+  const maps = getMindmaps();
+  delete maps[sel];
+  saveMindmaps(maps);
+  populateMindmapSelect();
+  showNotif('Deleted: ' + sel);
+}
+
+function populateMindmapSelect() {
+  const sel = document.getElementById('mindmap-saved-select');
+  if(!sel) return;
+  const maps = getMindmaps();
+  const keys = Object.keys(maps);
+  sel.innerHTML = '<option value="">— Load saved map —</option>' +
+    keys.map(k => '<option value="'+k+'">'+k+'</option>').join('');
+}
 
 // ── AI AUTOCOMPLETE ──────────────────────────────────────────────
 let _acTimer = null;
@@ -1209,7 +1340,7 @@ async function expandNotes() {
 }
 
 // ── IDEAS ────────────────────────────────────────────────────────
-
+let ideas = [];
 
 async function loadIdeas() {
   try {
@@ -1257,27 +1388,66 @@ function renderIdeas() {
     c.innerHTML = '<div style="color:var(--muted2);font-size:12px;text-align:center;padding:20px">No ideas yet — use ADD IDEA</div>';
     return;
   }
-  c.innerHTML = ideas.map((idea, i) => `
-    <div class="idea-item">
-      <div style="flex:1">
-        <strong>${idea.title}</strong>
-        ${idea.description ? '<div style="margin-top:3px;color:var(--muted);font-size:11px">' + idea.description + '</div>' : ''}
-        <div class="idea-meta">${idea.category || ''} · ${idea.priority || ''} · ${new Date(idea.created_at||Date.now()).toLocaleDateString('en-GB')}</div>
-      </div>
-      <div><button class="icon-btn" onclick="deleteIdea(${idea.id||i})">✕</button></div>
-    </div>`).join('');
+  c.innerHTML = ideas.map((idea, i) => {
+    const id = idea.id || i;
+    return '<div class="idea-item" id="idea-item-'+id+'">' +
+      '<div style="flex:1" id="idea-view-'+id+'">' +
+        '<strong>' + idea.title + '</strong>' +
+        (idea.description ? '<div style="margin-top:3px;color:var(--muted);font-size:11px">'+idea.description+'</div>' : '') +
+        '<div class="idea-meta">' + (idea.category||'') + ' · ' + (idea.priority||'') + ' · ' + new Date(idea.created_at||Date.now()).toLocaleDateString('en-GB') + '</div>' +
+      '</div>' +
+      '<div id="idea-edit-'+id+'" style="display:none;flex:1">' +
+        '<input type="text" class="os-input" id="ie-title-'+id+'" value="'+idea.title+'" style="margin-bottom:6px;font-size:11px">' +
+        '<input type="text" class="os-input" id="ie-desc-'+id+'" value="'+(idea.description||'')+'" placeholder="Description" style="font-size:11px">' +
+      '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:4px;margin-left:10px">' +
+        '<button class="icon-btn" onclick="toggleIdeaEdit('+id+')" id="ie-btn-'+id+'" title="Edit">✏</button>' +
+        '<button class="icon-btn" onclick="deleteIdea('+id+')" title="Delete">✕</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function toggleIdeaEdit(id) {
+  const viewEl = document.getElementById('idea-view-'+id);
+  const editEl = document.getElementById('idea-edit-'+id);
+  const btn = document.getElementById('ie-btn-'+id);
+  const isEditing = editEl.style.display !== 'none';
+  if(isEditing) {
+    // Save edit
+    const newTitle = document.getElementById('ie-title-'+id).value.trim();
+    const newDesc = document.getElementById('ie-desc-'+id).value.trim();
+    const idea = ideas.find(i => (i.id||ideas.indexOf(i)) == id);
+    if(idea && newTitle) {
+      idea.title = newTitle;
+      idea.description = newDesc;
+      localStorage.setItem('malik-ideas', JSON.stringify(ideas));
+      try { api('PUT', '/api/ideas/'+id, {title:newTitle, description:newDesc}); } catch(e){}
+    }
+    editEl.style.display = 'none';
+    viewEl.style.display = 'block';
+    btn.textContent = '✏';
+    renderIdeas();
+  } else {
+    viewEl.style.display = 'none';
+    editEl.style.display = 'block';
+    btn.textContent = '✓';
+  }
 }
 
 async function deleteIdea(id) {
   try {
     await api('DELETE', '/api/ideas/' + id);
-    ideas = ideas.filter(i => i.id !== id);
-    renderIdeas();
-    updateStats();
-  } catch(e) { showNotif('Delete failed', 'error'); }
+  } catch(e) {}
+  ideas = ideas.filter(i => (i.id !== id) && (ideas.indexOf(i) !== id));
+  localStorage.setItem('malik-ideas', JSON.stringify(ideas));
+  renderIdeas();
+  updateStats();
 }
 
 loadIdeas();
+// Populate mindmap dropdown on load
+setTimeout(populateMindmapSelect, 100);
 
 // ── ML PATHWAY ───────────────────────────────────────────────────
 const mlPath = [
@@ -1530,7 +1700,7 @@ async function renderProgressChart() {
 loadGymData();
 
 // ── UNIVERSITY / GRADE CALCULATOR ───────────────────────────────
-
+let modules = [];
 
 // Seed data — Semester 1 modules pre-loaded
 const SEED_MODULES = [
@@ -1974,6 +2144,7 @@ const habitDefs = [
   {name:'Sport/Activity',   color:'var(--pink)'},
 ];
 const habitDays = ['Sat','Sun','Mon','Tue','Wed','Thu','Fri'];
+let habitState = {};
 
 async function loadHabits() {
   try {
@@ -2026,67 +2197,6 @@ async function resetHabits() {
   renderHabits();
   showNotif('Habits reset for new week');
 }
-
-// Update habits panel title with current week
-function updateHabitsTitle() {
-  const el = document.getElementById('habits-week-title');
-  if(!el) return;
-  const now = new Date();
-  const day = now.getDay();
-  const diff = day === 6 ? 0 : (day + 1);
-  const weekStart = new Date(now);
-  weekStart.setDate(now.getDate() - diff);
-  el.textContent = 'Daily Habits — Week of ' + weekStart.toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'});
-}
-updateHabitsTitle();
-
-async function logWeek() {
-  const total = Object.values(habitState).filter(Boolean).length;
-  const maxPossible = 9 * 7; // 9 habits x 7 days
-  const pct = Math.round((total / maxPossible) * 100);
-  const now = new Date();
-  const day = now.getDay();
-  const diff = day === 6 ? 0 : (day + 1);
-  const weekStart = new Date(now);
-  weekStart.setDate(now.getDate() - diff);
-  const weekLabel = weekStart.toLocaleDateString('en-GB', {day:'numeric',month:'short'});
-
-  // Save to localStorage log
-  const log = JSON.parse(localStorage.getItem('malik-habits-log') || '[]');
-  const existing = log.findIndex(w => w.week === weekLabel);
-  const entry = {
-    week: weekLabel,
-    score: total,
-    pct,
-    breakdown: Object.fromEntries(
-      ['Sabaq','Sabqi+Manzil','Tilawah','Anki','Uni Notes','Project Lab','Curiosity Lab','Gym','Sport']
-        .map((name,hi) => [name, habitDays.filter((_,di) => habitState[hi+'-'+di]).length + '/7'])
-    )
-  };
-  if(existing >= 0) log[existing] = entry;
-  else log.unshift(entry);
-  localStorage.setItem('malik-habits-log', JSON.stringify(log.slice(0, 12)));
-  renderHabitsLog();
-  showNotif('Week logged: ' + total + '/' + maxPossible + ' (' + pct + '%)');
-}
-
-function renderHabitsLog() {
-  const c = document.getElementById('habits-log-container');
-  if(!c) return;
-  const log = JSON.parse(localStorage.getItem('malik-habits-log') || '[]');
-  if(!log.length) { c.innerHTML = ''; return; }
-  c.innerHTML = '<div style="font-size:9px;letter-spacing:0.2em;color:var(--muted);text-transform:uppercase;margin-bottom:10px;padding-top:14px;border-top:1px solid var(--border)">WEEKLY LOG HISTORY</div>' +
-    log.map(w => {
-      const col = w.pct >= 80 ? 'var(--lime)' : w.pct >= 60 ? 'var(--gold)' : 'var(--orange)';
-      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">' +
-        '<div style="font-size:12px;font-weight:700">' + w.week + '</div>' +
-        '<div style="display:flex;gap:16px;align-items:center">' +
-        '<div style="font-size:11px;color:var(--muted)">' + w.score + '/63 habits</div>' +
-        '<div style="font-family:var(--display);font-size:20px;color:' + col + '">' + w.pct + '%</div>' +
-        '</div></div>';
-    }).join('');
-}
-renderHabitsLog();
 
 loadHabits();
 
