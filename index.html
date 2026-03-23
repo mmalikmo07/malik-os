@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MALIK·OS — Personal Command Intelligence</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
@@ -901,10 +904,14 @@ select.os-input{cursor:pointer;}
       <h2>THIS <span style="color:var(--lime)">WEEK</span></h2>
       <div class="panel">
         <div class="panel-header">
-          <span class="panel-title">Daily Habits — Week of 21 Mar 2026</span>
-          <button class="btn btn-lime btn-sm" onclick="resetHabits()">RESET WEEK</button>
+          <span class="panel-title" id="habits-week-title">Daily Habits — This Week</span>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-teal btn-sm" onclick="logWeek()">📋 LOG WEEK</button>
+            <button class="btn btn-lime btn-sm" onclick="resetHabits()">RESET WEEK</button>
+          </div>
         </div>
         <div class="panel-body" id="habits-container"></div>
+        <div id="habits-log-container" style="padding:0 18px 18px"></div>
       </div>
     </div>
 
@@ -919,6 +926,11 @@ select.os-input{cursor:pointer;}
 // ── CONFIG ────────────────────────────────────────────────────────
 // Set this to your Railway backend URL after deploying
 const API = 'https://malik-os-backend-production.up.railway.app';
+
+// ── GLOBAL STATE — declared early so nothing crashes on init ─────
+let habitState = {};
+let ideas = [];
+let modules = [];
 
 // ── API HELPER ────────────────────────────────────────────────────
 async function api(method, path, body) {
@@ -1197,7 +1209,7 @@ async function expandNotes() {
 }
 
 // ── IDEAS ────────────────────────────────────────────────────────
-let ideas = [];
+
 
 async function loadIdeas() {
   try {
@@ -1518,7 +1530,7 @@ async function renderProgressChart() {
 loadGymData();
 
 // ── UNIVERSITY / GRADE CALCULATOR ───────────────────────────────
-let modules = [];
+
 
 // Seed data — Semester 1 modules pre-loaded
 const SEED_MODULES = [
@@ -1962,7 +1974,6 @@ const habitDefs = [
   {name:'Sport/Activity',   color:'var(--pink)'},
 ];
 const habitDays = ['Sat','Sun','Mon','Tue','Wed','Thu','Fri'];
-let habitState = {};
 
 async function loadHabits() {
   try {
@@ -2015,6 +2026,67 @@ async function resetHabits() {
   renderHabits();
   showNotif('Habits reset for new week');
 }
+
+// Update habits panel title with current week
+function updateHabitsTitle() {
+  const el = document.getElementById('habits-week-title');
+  if(!el) return;
+  const now = new Date();
+  const day = now.getDay();
+  const diff = day === 6 ? 0 : (day + 1);
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - diff);
+  el.textContent = 'Daily Habits — Week of ' + weekStart.toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'});
+}
+updateHabitsTitle();
+
+async function logWeek() {
+  const total = Object.values(habitState).filter(Boolean).length;
+  const maxPossible = 9 * 7; // 9 habits x 7 days
+  const pct = Math.round((total / maxPossible) * 100);
+  const now = new Date();
+  const day = now.getDay();
+  const diff = day === 6 ? 0 : (day + 1);
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - diff);
+  const weekLabel = weekStart.toLocaleDateString('en-GB', {day:'numeric',month:'short'});
+
+  // Save to localStorage log
+  const log = JSON.parse(localStorage.getItem('malik-habits-log') || '[]');
+  const existing = log.findIndex(w => w.week === weekLabel);
+  const entry = {
+    week: weekLabel,
+    score: total,
+    pct,
+    breakdown: Object.fromEntries(
+      ['Sabaq','Sabqi+Manzil','Tilawah','Anki','Uni Notes','Project Lab','Curiosity Lab','Gym','Sport']
+        .map((name,hi) => [name, habitDays.filter((_,di) => habitState[hi+'-'+di]).length + '/7'])
+    )
+  };
+  if(existing >= 0) log[existing] = entry;
+  else log.unshift(entry);
+  localStorage.setItem('malik-habits-log', JSON.stringify(log.slice(0, 12)));
+  renderHabitsLog();
+  showNotif('Week logged: ' + total + '/' + maxPossible + ' (' + pct + '%)');
+}
+
+function renderHabitsLog() {
+  const c = document.getElementById('habits-log-container');
+  if(!c) return;
+  const log = JSON.parse(localStorage.getItem('malik-habits-log') || '[]');
+  if(!log.length) { c.innerHTML = ''; return; }
+  c.innerHTML = '<div style="font-size:9px;letter-spacing:0.2em;color:var(--muted);text-transform:uppercase;margin-bottom:10px;padding-top:14px;border-top:1px solid var(--border)">WEEKLY LOG HISTORY</div>' +
+    log.map(w => {
+      const col = w.pct >= 80 ? 'var(--lime)' : w.pct >= 60 ? 'var(--gold)' : 'var(--orange)';
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">' +
+        '<div style="font-size:12px;font-weight:700">' + w.week + '</div>' +
+        '<div style="display:flex;gap:16px;align-items:center">' +
+        '<div style="font-size:11px;color:var(--muted)">' + w.score + '/63 habits</div>' +
+        '<div style="font-family:var(--display);font-size:20px;color:' + col + '">' + w.pct + '%</div>' +
+        '</div></div>';
+    }).join('');
+}
+renderHabitsLog();
 
 loadHabits();
 
