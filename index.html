@@ -2288,30 +2288,42 @@ function renderSavedConcepts() {
   if(!c) return;
   const concepts = JSON.parse(localStorage.getItem('malik-concepts') || '{}');
   const keys = Object.keys(concepts);
-  if(!keys.length) { c.innerHTML = '<div style="color:var(--muted2);font-size:12px;text-align:center;padding:10px">No saved concepts yet</div>'; return; }
-  c.innerHTML = keys.map(k => {
+  if(!keys.length) {
+    c.innerHTML = '<div style="color:var(--muted2);font-size:12px;text-align:center;padding:10px">No saved concepts yet</div>';
+    return;
+  }
+  c.innerHTML = keys.map((k, ki) => {
     const cn = concepts[k];
     return '<div style="border:1px solid var(--border);background:var(--s2);padding:12px;margin-bottom:8px">' +
       '<div style="display:flex;justify-content:space-between;margin-bottom:6px">' +
         '<strong style="color:var(--lime)">' + k + '</strong>' +
         '<div style="display:flex;gap:6px;align-items:center">' +
           '<span style="font-size:9px;color:var(--muted)">' + cn.date + ' · ' + cn.level + '</span>' +
-          '<button class="icon-btn" onclick="deleteConcept('' + k.replace(/'/g,"\'") + '')">✕</button>' +
+          '<button class="icon-btn concept-del-btn" data-key="' + ki + '">✕</button>' +
         '</div>' +
       '</div>' +
       '<div style="font-size:11px;color:var(--muted);line-height:1.7;max-height:100px;overflow:hidden">' + cn.text.substring(0,300) + '...</div>' +
-      '<button class="btn btn-lime btn-sm" style="margin-top:8px" onclick="expandConcept('' + k.replace(/'/g,"\'") + '')">READ FULL</button>' +
+      '<button class="btn btn-lime btn-sm concept-exp-btn" data-key="' + ki + '" style="margin-top:8px">READ FULL</button>' +
     '</div>';
   }).join('');
+
+  // Wire up buttons using data-key index
+  const allKeys = keys;
+  c.querySelectorAll('.concept-del-btn').forEach(btn => {
+    btn.addEventListener('click', () => deleteConcept(allKeys[parseInt(btn.dataset.key)]));
+  });
+  c.querySelectorAll('.concept-exp-btn').forEach(btn => {
+    btn.addEventListener('click', () => expandConcept(allKeys[parseInt(btn.dataset.key)]));
+  });
 }
+
 
 function expandConcept(name) {
   const concepts = JSON.parse(localStorage.getItem('malik-concepts') || '{}');
   const cn = concepts[name];
   if(!cn) return;
   document.getElementById('study-q').value = name;
-  document.getElementById('study-answer').innerHTML = cn.text.replace(/
-/g,'<br>');
+  document.getElementById('study-answer').innerHTML = cn.text.replace(/\n/g,'<br>');
   document.getElementById('study-answer').className = 'ai-box';
 }
 
@@ -2352,19 +2364,29 @@ function renderSavedHustle() {
   const c = document.getElementById('saved-hustle-container');
   if(!c) return;
   const saved = JSON.parse(localStorage.getItem('malik-hustle-saved') || '{}');
-  const keys = Object.keys(saved);
-  if(!keys.length) { c.innerHTML = '<div style="color:var(--muted2);font-size:12px;text-align:center;padding:10px">No saved ideas yet</div>'; return; }
-  c.innerHTML = keys.reverse().map(k => {
+  const keys = Object.keys(saved).reverse();
+  if(!keys.length) {
+    c.innerHTML = '<div style="color:var(--muted2);font-size:12px;text-align:center;padding:10px">No saved ideas yet</div>';
+    return;
+  }
+  c.innerHTML = keys.map((k, ki) => {
     const s = saved[k];
     return '<div style="border:1px solid var(--border);background:var(--s2);padding:12px;margin-bottom:8px">' +
       '<div style="display:flex;justify-content:space-between;margin-bottom:6px">' +
         '<strong style="font-size:11px;color:var(--teal)">' + k + '</strong>' +
-        '<button class="icon-btn" onclick="deleteHustleSave('' + k.replace(/'/g,"\'") + '')">✕</button>' +
+        '<button class="icon-btn hustle-del-btn" data-key="' + ki + '">✕</button>' +
       '</div>' +
       '<div style="font-size:11px;color:var(--muted);line-height:1.7;max-height:80px;overflow:hidden">' + s.text.substring(0,250) + '...</div>' +
     '</div>';
   }).join('');
+
+  c.querySelectorAll('.hustle-del-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      deleteHustleSave(keys[parseInt(btn.dataset.key)]);
+    });
+  });
 }
+
 
 function deleteHustleSave(key) {
   const saved = JSON.parse(localStorage.getItem('malik-hustle-saved') || '{}');
