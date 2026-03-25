@@ -320,6 +320,71 @@ select.os-input{cursor:pointer;}
 ═══════════════════════════════════════ */
 #mindmap-svg{width:100%;height:480px;background:var(--s2);border:1px solid var(--border);}
 
+/* Mindmap overlay controls — Google Maps style */
+.mm-controls{
+  position:absolute;bottom:16px;right:16px;
+  display:flex;flex-direction:column;gap:2px;
+  z-index:10;
+}
+.mm-ctrl-btn{
+  width:40px;height:40px;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(14,14,18,0.92);
+  border:1px solid var(--border2);
+  color:var(--lime);font-size:18px;font-weight:700;
+  cursor:pointer;transition:all 0.15s;
+  font-family:var(--mono);backdrop-filter:blur(8px);
+  user-select:none;line-height:1;
+}
+.mm-ctrl-btn:first-child{border-radius:6px 6px 0 0;}
+.mm-ctrl-btn:last-child{border-radius:0 0 6px 6px;}
+.mm-ctrl-btn:only-child{border-radius:6px;}
+.mm-ctrl-btn:hover{background:rgba(200,255,0,0.12);border-color:var(--lime);}
+.mm-ctrl-btn:active{background:rgba(200,255,0,0.22);transform:scale(0.92);}
+.mm-ctrl-sep{width:100%;height:1px;background:var(--border2);}
+
+.mm-reset-btn{
+  position:absolute;bottom:16px;left:16px;
+  width:40px;height:40px;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(14,14,18,0.92);border:1px solid var(--border2);
+  border-radius:6px;color:var(--lime);font-size:16px;
+  cursor:pointer;transition:all 0.15s;z-index:10;
+  backdrop-filter:blur(8px);
+}
+.mm-reset-btn:hover{background:rgba(200,255,0,0.12);border-color:var(--lime);}
+.mm-reset-btn:active{transform:scale(0.92);}
+
+/* Mindmap zoom level badge */
+.mm-zoom-badge{
+  position:absolute;bottom:18px;left:50%;transform:translateX(-50%);
+  background:rgba(14,14,18,0.85);border:1px solid var(--border2);
+  border-radius:4px;padding:3px 10px;font-size:9px;
+  color:var(--muted);letter-spacing:0.1em;z-index:10;
+  pointer-events:none;transition:opacity 0.3s;
+  font-family:var(--mono);backdrop-filter:blur(8px);
+}
+
+/* Grid texture for mindmap canvas */
+.mm-canvas{
+  margin-top:10px;overflow:hidden;
+  border:1px solid var(--border);
+  background:
+    radial-gradient(circle, rgba(200,255,0,0.08) 1px, transparent 1px),
+    var(--s2);
+  background-size: 24px 24px;
+  cursor:grab;position:relative;
+  min-height:500px;
+  border-radius:4px;
+}
+.mm-canvas.grabbing{cursor:grabbing;}
+
+/* Smooth SVG transform */
+#mindmap-svg{
+  transform-origin:0 0;
+  will-change:transform;
+}
+
 /* ═══════════════════════════════════════
    CAREER CARDS
 ═══════════════════════════════════════ */
@@ -582,13 +647,18 @@ select.os-input{cursor:pointer;}
           <div class="panel-body">
             <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
               <input type="text" class="os-input" id="mindmap-name" placeholder="Map name e.g. PCB Projects..." style="flex:1;font-size:11px">
-              <button class="btn btn-lime btn-sm" onclick="mmZoom(1.2)">＋</button>
-              <button class="btn btn-lime btn-sm" onclick="mmZoom(0.8)">－</button>
-              <button class="btn btn-lime btn-sm" onclick="mmResetView()">⌖ RESET</button>
             </div>
             <textarea class="os-textarea" id="mindmap-text" placeholder="My Projects&#10;  LED Matrix Display&#10;    Arduino control&#10;    Bluetooth module&#10;    PCB design&#10;  Audio Spectrum Analyser&#10;    FFT algorithm&#10;    OLED display&#10;  PID Controller&#10;    Temperature sensor&#10;    Motor control" style="min-height:120px" oninput="clearTimeout(window._mmTimer);window._mmTimer=setTimeout(renderMindmap,200)" onkeydown="handleMindmapTab(event)"></textarea>
-            <div id="mindmap-canvas-wrap" style="margin-top:10px;overflow:hidden;border:1px solid var(--border);background:var(--s2);cursor:grab;position:relative" onmousedown="mmDragStart(event)" onmousemove="mmDragMove(event)" onmouseup="mmDragEnd()" onmouseleave="mmDragEnd()" onwheel="mmWheel(event)">
-              <svg id="mindmap-svg" style="display:block;transition:none"></svg>
+            <div id="mindmap-canvas-wrap" class="mm-canvas" onmousedown="mmDragStart(event)" onmousemove="mmDragMove(event)" onmouseup="mmDragEnd()" onmouseleave="mmDragEnd()" onwheel="mmWheel(event)">
+              <svg id="mindmap-svg" style="display:block"></svg>
+              <!-- Google Maps-style overlay controls -->
+              <div class="mm-controls">
+                <button class="mm-ctrl-btn" onclick="mmZoom(1.25)" title="Zoom in">+</button>
+                <div class="mm-ctrl-sep"></div>
+                <button class="mm-ctrl-btn" onclick="mmZoom(0.8)" title="Zoom out">−</button>
+              </div>
+              <button class="mm-reset-btn" onclick="mmResetView()" title="Reset view">⌖</button>
+              <div class="mm-zoom-badge" id="mm-zoom-badge">100%</div>
             </div>
           </div>
         </div>
@@ -1130,38 +1200,105 @@ function handleMindmapTab(e) {
 
 // ── MINDMAP STATE ───────────────────────────────────────────────
 let mmScale = 1, mmPanX = 0, mmPanY = 0;
+let mmTargetScale = 1, mmTargetPanX = 0, mmTargetPanY = 0;
 let mmDragging = false, mmLastX = 0, mmLastY = 0;
 let mmFullW = 900, mmFullH = 560;
+let mmAnimFrame = null;
 
 function mmZoom(factor) {
-  mmScale = Math.min(3, Math.max(0.3, mmScale * factor));
-  applyMmTransform();
+  const wrap = document.getElementById('mindmap-canvas-wrap');
+  if(!wrap) return;
+  const rect = wrap.getBoundingClientRect();
+  const cx = rect.width / 2;
+  const cy = rect.height / 2;
+  const oldScale = mmTargetScale;
+  mmTargetScale = Math.min(4, Math.max(0.2, mmTargetScale * factor));
+  // Zoom towards center of viewport
+  const ratio = mmTargetScale / oldScale;
+  mmTargetPanX = cx - ratio * (cx - mmTargetPanX);
+  mmTargetPanY = cy - ratio * (cy - mmTargetPanY);
+  mmAnimateToTarget();
+  updateZoomBadge();
 }
-function mmResetView() { mmScale=1; mmPanX=0; mmPanY=0; applyMmTransform(); }
+function mmResetView() {
+  mmTargetScale=1; mmTargetPanX=0; mmTargetPanY=0;
+  mmAnimateToTarget();
+  updateZoomBadge();
+}
+function updateZoomBadge() {
+  const badge = document.getElementById('mm-zoom-badge');
+  if(badge) {
+    badge.textContent = Math.round(mmTargetScale * 100) + '%';
+    badge.style.opacity = '1';
+    clearTimeout(window._mmBadgeTimer);
+    window._mmBadgeTimer = setTimeout(() => { badge.style.opacity = '0.4'; }, 1500);
+  }
+}
+function mmAnimateToTarget() {
+  if(mmAnimFrame) cancelAnimationFrame(mmAnimFrame);
+  const ease = 0.18;
+  function step() {
+    const ds = mmTargetScale - mmScale;
+    const dx = mmTargetPanX - mmPanX;
+    const dy = mmTargetPanY - mmPanY;
+    if(Math.abs(ds) < 0.001 && Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) {
+      mmScale = mmTargetScale;
+      mmPanX = mmTargetPanX;
+      mmPanY = mmTargetPanY;
+      applyMmTransform();
+      mmAnimFrame = null;
+      return;
+    }
+    mmScale += ds * ease;
+    mmPanX += dx * ease;
+    mmPanY += dy * ease;
+    applyMmTransform();
+    mmAnimFrame = requestAnimationFrame(step);
+  }
+  step();
+}
 function applyMmTransform() {
   const svg = document.getElementById('mindmap-svg');
   if(svg) svg.style.transform = 'translate('+mmPanX+'px,'+mmPanY+'px) scale('+mmScale+')';
 }
 function mmDragStart(e) {
+  if(e.target.closest('.mm-controls') || e.target.closest('.mm-reset-btn')) return;
   mmDragging = true; mmLastX = e.clientX; mmLastY = e.clientY;
+  if(mmAnimFrame) { cancelAnimationFrame(mmAnimFrame); mmAnimFrame = null; }
+  mmTargetPanX = mmPanX; mmTargetPanY = mmPanY; mmTargetScale = mmScale;
   const wrap = document.getElementById('mindmap-canvas-wrap');
-  if(wrap) wrap.style.cursor = 'grabbing';
+  if(wrap) wrap.classList.add('grabbing');
 }
 function mmDragMove(e) {
   if(!mmDragging) return;
-  mmPanX += e.clientX - mmLastX;
-  mmPanY += e.clientY - mmLastY;
+  const dx = e.clientX - mmLastX;
+  const dy = e.clientY - mmLastY;
+  mmPanX += dx; mmPanY += dy;
+  mmTargetPanX = mmPanX; mmTargetPanY = mmPanY;
   mmLastX = e.clientX; mmLastY = e.clientY;
   applyMmTransform();
 }
 function mmDragEnd() {
   mmDragging = false;
   const wrap = document.getElementById('mindmap-canvas-wrap');
-  if(wrap) wrap.style.cursor = 'grab';
+  if(wrap) wrap.classList.remove('grabbing');
 }
 function mmWheel(e) {
   e.preventDefault();
-  mmZoom(e.deltaY < 0 ? 1.1 : 0.9);
+  const wrap = document.getElementById('mindmap-canvas-wrap');
+  if(!wrap) return;
+  const rect = wrap.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const oldScale = mmTargetScale;
+  const factor = e.deltaY < 0 ? 1.12 : 0.89;
+  mmTargetScale = Math.min(4, Math.max(0.2, mmTargetScale * factor));
+  // Zoom towards mouse pointer
+  const ratio = mmTargetScale / oldScale;
+  mmTargetPanX = mx - ratio * (mx - mmTargetPanX);
+  mmTargetPanY = my - ratio * (my - mmTargetPanY);
+  mmAnimateToTarget();
+  updateZoomBadge();
 }
 
 // ── MINDMAP RENDERER ────────────────────────────────────────────
@@ -1277,7 +1414,14 @@ function renderMindmap() {
   svg.setAttribute('width',W);
   svg.setAttribute('height',H);
   svg.style.transformOrigin = '0 0';
-  svg.innerHTML = '<rect width="'+W+'" height="'+H+'" fill="#0e0e12" rx="2"/>' + linesPieces.join('') + nodesPieces.join('');
+  // Grid pattern for the SVG background
+  const gridPattern = '<defs><pattern id="mm-grid" width="24" height="24" patternUnits="userSpaceOnUse">' +
+    '<circle cx="12" cy="12" r="0.8" fill="rgba(200,255,0,0.06)"/>' +
+    '</pattern></defs>';
+  svg.innerHTML = gridPattern +
+    '<rect width="'+W+'" height="'+H+'" fill="#0a0a0e" rx="2"/>' +
+    '<rect width="'+W+'" height="'+H+'" fill="url(#mm-grid)"/>' +
+    linesPieces.join('') + nodesPieces.join('');
   applyMmTransform();
 
   // Set wrap height
