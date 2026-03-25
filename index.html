@@ -81,7 +81,10 @@ body::before{
 }
 .status-dot.live{background:var(--lime);box-shadow:0 0 8px var(--lime);animation:blink-dot 2s infinite;}
 @keyframes blink-dot{0%,100%{opacity:1;}50%{opacity:0.5;}}
-.topbar-time{font-size:11px;color:var(--muted);letter-spacing:0.1em;}
+.topbar-time{font-size:11px;color:var(--muted);letter-spacing:0.1em;transition:all 0.2s;cursor:default;}
+.topbar-time:hover{color:var(--lime);text-shadow:0 0 8px rgba(200,255,0,0.5);}
+#topbar-date{transition:all 0.2s;cursor:default;}
+#topbar-date:hover{color:var(--lime)!important;border-color:var(--lime)!important;text-shadow:0 0 8px rgba(200,255,0,0.5);}
 
 #api-key-input{
   background:var(--s1);border:1px solid var(--border2);
@@ -371,11 +374,12 @@ select.os-input{cursor:pointer;}
   border:1px solid var(--border);
   background:
     radial-gradient(circle, rgba(200,255,0,0.08) 1px, transparent 1px),
-    var(--s2);
+    #12121a;
   background-size: 24px 24px;
   cursor:grab;position:relative;
   min-height:500px;
   border-radius:4px;
+  border:none;
 }
 .mm-canvas.grabbing{cursor:grabbing;}
 
@@ -768,6 +772,7 @@ select.os-input{cursor:pointer;}
           <div style="display:flex;gap:8px;margin-top:12px">
             <button class="btn btn-lime" onclick="acceptSuggestion()">ACCEPT SUGGESTION (Tab)</button>
             <button class="btn btn-gold" onclick="expandNotes()">⚡ EXPAND WITH AI</button>
+            <button class="btn btn-violet btn-sm" onclick="newSmartNote()">➕ NEW NOTE</button>
           </div>
         </div>
       </div>
@@ -833,6 +838,28 @@ select.os-input{cursor:pointer;}
               <div style="font-size:9px;color:var(--muted);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:6px">Weekly Hifz Log</div>
               <textarea class="os-textarea" id="hifz-log" placeholder="Log your hifz progress, notes on difficult ayat..." style="min-height:70px"></textarea>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HIFZ PROGRESS TRACKER -->
+      <div class="panel" style="margin-top:14px">
+        <div class="panel-header">
+          <span class="panel-title">📋 Hifz Progress — Quran Memorisation</span>
+          <div style="display:flex;gap:6px;align-items:center">
+            <span style="font-family:var(--display);font-size:18px;color:var(--lime)" id="hifz-pct">0%</span>
+            <span style="font-size:10px;color:var(--muted)" id="hifz-count">0/114 Surahs</span>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div style="height:14px;background:var(--s1);border:1px solid var(--border);border-radius:7px;overflow:hidden;margin-bottom:14px">
+            <div id="hifz-bar" style="height:100%;background:linear-gradient(90deg,var(--lime),var(--gold));border-radius:7px;transition:width 0.5s ease;width:0%"></div>
+          </div>
+          <div style="font-size:9px;letter-spacing:0.2em;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Select memorised surahs:</div>
+          <div id="hifz-surah-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px;max-height:260px;overflow-y:auto;padding-right:6px"></div>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button class="btn btn-lime btn-sm" onclick="selectAllSurahs()">SELECT ALL</button>
+            <button class="btn btn-orange btn-sm" onclick="clearAllSurahs()">CLEAR ALL</button>
           </div>
         </div>
       </div>
@@ -1433,7 +1460,7 @@ function renderMindmap() {
     '<circle cx="12" cy="12" r="0.8" fill="rgba(200,255,0,0.06)"/>' +
     '</pattern></defs>';
   svg.innerHTML = gridPattern +
-    '<rect width="'+W+'" height="'+H+'" fill="#0a0a0e" rx="2"/>' +
+    '<rect width="'+W+'" height="'+H+'" fill="#12121a" rx="0"/>' +
     '<rect width="'+W+'" height="'+H+'" fill="url(#mm-grid)"/>' +
     linesPieces.join('') + nodesPieces.join('');
   applyMmTransform();
@@ -1593,6 +1620,16 @@ function populateNotesSelect() {
     Object.keys(notes).map(k => '<option value="'+k+'">'+k+'</option>').join('');
 }
 setTimeout(populateNotesSelect, 200);
+
+function newSmartNote() {
+  document.getElementById('notes-area').innerHTML = '';
+  document.getElementById('notes-save-name').value = '';
+  document.getElementById('notes-suggest').innerHTML = 'Start writing — AI autocomplete will activate...';
+  const sel = document.getElementById('notes-slot-select');
+  if(sel) sel.value = '';
+  window._lastSug = null;
+  showNotif('New note started');
+}
 
 // ── IDEAS ────────────────────────────────────────────────────────
 let ideas = [];
@@ -1757,6 +1794,77 @@ async function changeCount(key, delta) {
   }
 }
 loadQuran();
+
+// ── QURAN HIFZ PROGRESS TRACKER ──────────────────────────────────
+const SURAHS = [
+  'Al-Fatiha','Al-Baqarah','Aal-Imran','An-Nisa','Al-Ma\'idah','Al-An\'am','Al-A\'raf','Al-Anfal','At-Tawbah','Yunus',
+  'Hud','Yusuf','Ar-Ra\'d','Ibrahim','Al-Hijr','An-Nahl','Al-Isra\'','Al-Kahf','Maryam','Taha',
+  'Al-Anbiya','Al-Hajj','Al-Mu\'minun','An-Nur','Al-Furqan','Ash-Shu\'ara','An-Naml','Al-Qasas','Al-Ankabut','Ar-Rum',
+  'Luqman','As-Sajdah','Al-Ahzab','Saba\'','Fatir','Ya-Sin','As-Saffat','Sad','Az-Zumar','Ghafir',
+  'Fussilat','Ash-Shura','Az-Zukhruf','Ad-Dukhan','Al-Jathiyah','Al-Ahqaf','Muhammad','Al-Fath','Al-Hujurat','Qaf',
+  'Adh-Dhariyat','At-Tur','An-Najm','Al-Qamar','Ar-Rahman','Al-Waqi\'ah','Al-Hadid','Al-Mujadila','Al-Hashr','Al-Mumtahanah',
+  'As-Saff','Al-Jumu\'ah','Al-Munafiqun','At-Taghabun','At-Talaq','At-Tahrim','Al-Mulk','Al-Qalam','Al-Haqqah','Al-Ma\'arij',
+  'Nuh','Al-Jinn','Al-Muzzammil','Al-Muddaththir','Al-Qiyamah','Al-Insan','Al-Mursalat','An-Naba\'','An-Nazi\'at','Abasa',
+  'At-Takwir','Al-Infitar','Al-Mutaffifin','Al-Inshiqaq','Al-Buruj','At-Tariq','Al-A\'la','Al-Ghashiyah','Al-Fajr','Al-Balad',
+  'Ash-Shams','Al-Layl','Ad-Duhaa','Ash-Sharh','At-Tin','Al-\'Alaq','Al-Qadr','Al-Bayyinah','Az-Zalzalah','Al-\'Adiyat',
+  'Al-Qari\'ah','At-Takathur','Al-\'Asr','Al-Humazah','Al-Fil','Quraysh','Al-Ma\'un','Al-Kawthar','Al-Kafirun','An-Nasr',
+  'Al-Masad','Al-Ikhlas','Al-Falaq','An-Nas'
+];
+
+function getHifzState() { return JSON.parse(localStorage.getItem('malik-hifz-surahs') || '[]'); }
+function saveHifzState(arr) { localStorage.setItem('malik-hifz-surahs', JSON.stringify(arr)); }
+
+function renderHifzGrid() {
+  const grid = document.getElementById('hifz-surah-grid');
+  if(!grid) return;
+  const memorised = getHifzState();
+  grid.innerHTML = SURAHS.map((s, i) => {
+    const num = i + 1;
+    const checked = memorised.includes(num);
+    const col = checked ? 'var(--lime)' : 'var(--muted2)';
+    const bg = checked ? 'rgba(200,255,0,0.08)' : 'transparent';
+    return '<label style="display:flex;align-items:center;gap:6px;padding:5px 8px;border:1px solid ' +
+      (checked ? 'var(--lime)' : 'var(--border)') + ';border-radius:4px;cursor:pointer;font-size:10px;color:'+col+';background:'+bg+';transition:all 0.15s" ' +
+      'onmouseenter="this.style.borderColor=\'var(--lime)\'" onmouseleave="this.style.borderColor=\''+(checked?'var(--lime)':'var(--border)')+'\'">'+
+      '<input type="checkbox" '+(checked?'checked':'')+' onchange="toggleSurah('+num+')" style="accent-color:var(--lime);width:14px;height:14px">' +
+      '<span style="font-family:var(--mono);color:var(--muted);min-width:22px">'+num+'.</span> '+s+'</label>';
+  }).join('');
+  updateHifzProgress();
+}
+
+function toggleSurah(num) {
+  let memorised = getHifzState();
+  if(memorised.includes(num)) memorised = memorised.filter(n => n !== num);
+  else memorised.push(num);
+  saveHifzState(memorised);
+  renderHifzGrid();
+}
+
+function selectAllSurahs() {
+  saveHifzState(Array.from({length:114}, (_,i) => i+1));
+  renderHifzGrid();
+  showNotif('All 114 surahs marked as memorised');
+}
+function clearAllSurahs() {
+  if(!confirm('Clear all memorised surahs?')) return;
+  saveHifzState([]);
+  renderHifzGrid();
+  showNotif('Hifz progress cleared');
+}
+
+function updateHifzProgress() {
+  const memorised = getHifzState();
+  const count = memorised.length;
+  const pct = Math.round((count / 114) * 100);
+  const pctEl = document.getElementById('hifz-pct');
+  const countEl = document.getElementById('hifz-count');
+  const barEl = document.getElementById('hifz-bar');
+  if(pctEl) pctEl.textContent = pct + '%';
+  if(countEl) countEl.textContent = count + '/114 Surahs';
+  if(barEl) barEl.style.width = pct + '%';
+}
+
+setTimeout(renderHifzGrid, 300);
 
 // ── GYM ──────────────────────────────────────────────────────────
 const gymDays = {
