@@ -288,6 +288,37 @@ select.os-input{cursor:pointer;}
 .prog-track{height:2px;background:var(--border2);margin:8px 0;}
 .prog-fill{height:100%;background:var(--lime);transition:width 0.6s ease;}
 
+
+/* ═══════════════════════════════════════
+   RICH AI OUTPUT
+═══════════════════════════════════════ */
+.ai-rich{font-size:13px;color:var(--text);line-height:1.85;}
+.ai-rich h1{font-family:'Playfair Display',var(--serif);font-size:22px;color:var(--lime);margin:18px 0 10px;font-weight:700;border-bottom:1px solid var(--border);padding-bottom:6px;}
+.ai-rich h2{font-family:'Playfair Display',var(--serif);font-size:17px;color:var(--teal);margin:16px 0 8px;font-weight:600;}
+.ai-rich h3{font-family:var(--mono);font-size:13px;color:var(--gold);margin:14px 0 6px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;}
+.ai-rich p{margin:0 0 10px;}
+.ai-rich strong{color:var(--lime);font-weight:700;}
+.ai-rich em{color:var(--teal);font-style:italic;}
+.ai-rich code{background:var(--s1);color:var(--gold);border:1px solid var(--border);padding:1px 6px;border-radius:3px;font-family:var(--mono);font-size:11px;}
+.ai-rich pre{background:var(--s1);border:1px solid var(--border);border-left:3px solid var(--teal);padding:12px 16px;border-radius:4px;margin:10px 0;overflow-x:auto;}
+.ai-rich pre code{background:none;border:none;padding:0;color:var(--text);font-size:11px;line-height:1.7;}
+.ai-rich ul,.ai-rich ol{padding-left:20px;margin:8px 0;}
+.ai-rich li{margin:4px 0;}
+.ai-rich li::marker{color:var(--lime);}
+.ai-rich blockquote{border-left:3px solid var(--violet);padding:8px 14px;margin:10px 0;background:rgba(139,92,246,0.06);color:var(--muted);font-style:italic;border-radius:0 4px 4px 0;}
+.ai-rich hr{border:none;border-top:1px solid var(--border);margin:14px 0;}
+
+/* Simulation cards */
+.sim-card{background:var(--s1);border:1px solid var(--border);padding:12px 16px;margin:6px 0;border-radius:6px;display:flex;justify-content:space-between;align-items:center;transition:border-color 0.2s;}
+.sim-card:hover{border-color:var(--lime);}
+.sim-card-title{font-size:12px;font-weight:700;color:var(--text);}
+.sim-card-desc{font-size:10px;color:var(--muted);margin-top:2px;}
+.sim-sandbox{background:var(--s1);border:1px solid var(--border);border-radius:6px;margin-top:14px;overflow:hidden;}
+.sim-sandbox iframe{width:100%;border:none;min-height:400px;background:#0a0a0e;}
+.sim-toolbar{display:flex;gap:8px;padding:10px 14px;background:var(--s2);border-bottom:1px solid var(--border);align-items:center;}
+.saved-sim-item{background:var(--s2);border:1px solid var(--border);padding:10px 14px;margin:4px 0;border-radius:4px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:border-color 0.2s;}
+.saved-sim-item:hover{border-color:var(--lime);}
+
 /* ═══════════════════════════════════════
    PROJECT CARDS
 ═══════════════════════════════════════ */
@@ -691,7 +722,6 @@ select.os-input{cursor:pointer;}
             <textarea class="os-textarea" id="mindmap-text" placeholder="My Projects&#10;  LED Matrix Display&#10;    Arduino control&#10;    Bluetooth module&#10;    PCB design&#10;  Audio Spectrum Analyser&#10;    FFT algorithm&#10;    OLED display&#10;  PID Controller&#10;    Temperature sensor&#10;    Motor control" style="min-height:120px" oninput="clearTimeout(window._mmTimer);window._mmTimer=setTimeout(renderMindmap,200)" onkeydown="handleMindmapTab(event)"></textarea>
             <div id="mindmap-canvas-wrap" class="mm-canvas" onmousedown="mmDragStart(event)" onmousemove="mmDragMove(event)" onmouseup="mmDragEnd()" onmouseleave="mmDragEnd()" onwheel="mmWheel(event)">
               <svg id="mindmap-svg" style="display:block"></svg>
-              <!-- Google Maps-style overlay controls -->
               <div class="mm-controls">
                 <button class="mm-ctrl-btn" onclick="mmZoom(1.25)" title="Zoom in">+</button>
                 <div class="mm-ctrl-sep"></div>
@@ -781,6 +811,14 @@ select.os-input{cursor:pointer;}
           <button class="btn btn-lime btn-sm" onclick="toggleSavedConcepts()">SHOW/HIDE</button>
         </div>
         <div id="saved-concepts-container" style="display:none;padding:14px"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">🔬 Saved Simulations</span>
+          <button class="btn btn-lime btn-sm" onclick="toggleSavedSims()">SHOW/HIDE</button>
+        </div>
+        <div id="saved-sims-container" style="display:none;padding:14px"></div>
       </div>
 
       <div class="panel">
@@ -1237,6 +1275,52 @@ function showNotif(msg, type) {
 }
 
 // ── AI HELPER ────────────────────────────────────────────────────
+// ── MARKDOWN RENDERER ──────────────────────────────────────
+function renderMarkdown(md) {
+  let html = md;
+  // Code blocks first (```)
+  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
+    '<pre><code class="lang-'+lang+'">' + code.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</code></pre>');
+  // Split by lines for block-level processing
+  const lines = html.split('\n');
+  let out = [];
+  let inList = false, listType = '';
+  for(let i = 0; i < lines.length; i++) {
+    let line = lines[i];
+    // Skip if inside a <pre> block
+    if(line.includes('<pre>')) { out.push(line); while(i < lines.length-1 && !lines[i].includes('</pre>')) { i++; out.push(lines[i]); } continue; }
+    // Headers
+    if(line.startsWith('### ')) { if(inList) { out.push(listType === 'ul' ? '</ul>' : '</ol>'); inList = false; } out.push('<h3>' + line.slice(4) + '</h3>'); continue; }
+    if(line.startsWith('## ')) { if(inList) { out.push(listType === 'ul' ? '</ul>' : '</ol>'); inList = false; } out.push('<h2>' + line.slice(3) + '</h2>'); continue; }
+    if(line.startsWith('# ')) { if(inList) { out.push(listType === 'ul' ? '</ul>' : '</ol>'); inList = false; } out.push('<h1>' + line.slice(2) + '</h1>'); continue; }
+    // HR
+    if(/^---+$/.test(line.trim())) { if(inList) { out.push(listType === 'ul' ? '</ul>' : '</ol>'); inList = false; } out.push('<hr>'); continue; }
+    // Blockquote
+    if(line.startsWith('> ')) { out.push('<blockquote>' + line.slice(2) + '</blockquote>'); continue; }
+    // Unordered lists
+    if(/^[\-\*] /.test(line.trim())) {
+      if(!inList || listType !== 'ul') { if(inList) out.push('</'+listType+'>'); out.push('<ul>'); inList = true; listType = 'ul'; }
+      out.push('<li>' + line.trim().slice(2) + '</li>'); continue;
+    }
+    // Ordered lists
+    if(/^\d+\.\s/.test(line.trim())) {
+      if(!inList || listType !== 'ol') { if(inList) out.push('</'+listType+'>'); out.push('<ol>'); inList = true; listType = 'ol'; }
+      out.push('<li>' + line.trim().replace(/^\d+\.\s/, '') + '</li>'); continue;
+    }
+    // Close list if needed
+    if(inList && line.trim() === '') { out.push(listType === 'ul' ? '</ul>' : '</ol>'); inList = false; }
+    // Paragraph
+    if(line.trim()) out.push('<p>' + line + '</p>'); else out.push('');
+  }
+  if(inList) out.push(listType === 'ul' ? '</ul>' : '</ol>');
+  html = out.join('\n');
+  // Inline formatting
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/(?<![*])\*([^*]+)\*(?![*])/g, '<em>$1</em>');
+  return html;
+}
+
 async function askAI(endpoint, payload, outputEl) {
   if(outputEl) {
     outputEl.innerHTML = '<span class="spinner"></span> AI thinking...';
@@ -1245,7 +1329,12 @@ async function askAI(endpoint, payload, outputEl) {
   try {
     const data = await api('POST', endpoint, payload);
     if(outputEl) {
-      outputEl.innerHTML = data.text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      // Use rich rendering for study explanations
+      if(endpoint === '/api/ai/explain') {
+        outputEl.innerHTML = '<div class="ai-rich">' + renderMarkdown(data.text) + '</div>';
+      } else {
+        outputEl.innerHTML = '<div class="ai-rich">' + renderMarkdown(data.text) + '</div>';
+      }
       outputEl.className = 'ai-box';
     }
     return data.text;
@@ -1714,6 +1803,146 @@ function loadNoteSlot() {
     showNotif('Loaded: ' + sel.value);
   }
 }
+// ── STUDY EXPLAIN ────────────────────────────────────────────
+let _lastExplainConcept = '';
+let _lastSimCode = null;
+async function studyExplain() {
+  const concept = document.getElementById('study-q').value.trim();
+  const level = document.getElementById('study-level').value;
+  if(!concept) { showNotif('Enter a concept first'); return; }
+  _lastExplainConcept = concept;
+  const ansEl = document.getElementById('study-answer');
+  ansEl.innerHTML = '<span class="spinner"></span> AI thinking...';
+  ansEl.className = 'ai-box loading';
+  try {
+    const data = await api('POST', '/api/ai/explain', { concept, level });
+    // Render rich markdown
+    ansEl.innerHTML = '<div class="ai-rich">' + renderMarkdown(data.text) + '</div>';
+    ansEl.className = 'ai-box';
+    // Scroll to bottom of answer
+    ansEl.scrollTop = ansEl.scrollHeight;
+    // Now ask for simulation suggestions
+    fetchSimSuggestions(concept);
+  } catch(e) {
+    ansEl.innerHTML = 'AI Error: ' + e.message;
+    ansEl.className = 'ai-box';
+  }
+}
+
+async function fetchSimSuggestions(concept) {
+  try {
+    const data = await api('POST', '/api/ai/sim-suggest', { concept });
+    const sims = parseSimSuggestions(data.text);
+    if(sims.length > 0) {
+      const container = document.getElementById('sim-cards');
+      container.innerHTML = sims.map((s, i) =>
+        '<div class="sim-card">' +
+        '<div><div class="sim-card-title">' + s.title + '</div>' +
+        '<div class="sim-card-desc">' + s.desc + '</div></div>' +
+        '<button class="btn btn-lime btn-sm" onclick="runSimulation(' + i + ')">🔬 SIMULATE</button>' +
+        '</div>'
+      ).join('');
+      document.getElementById('sim-suggestions').style.display = 'block';
+      window._simList = sims;
+    } else {
+      document.getElementById('sim-suggestions').style.display = 'none';
+    }
+  } catch(e) {
+    document.getElementById('sim-suggestions').style.display = 'none';
+  }
+}
+
+function parseSimSuggestions(text) {
+  const sims = [];
+  const lines = text.split('\n');
+  lines.forEach(line => {
+    const m = line.match(/^\d+[\.\)]\s*\*?\*?(.+?)\*?\*?\s*[\-\u2014:]\s*(.+)$/);
+    if(m) sims.push({ title: m[1].replace(/\*/g,'').trim(), desc: m[2].trim() });
+  });
+  return sims;
+}
+
+async function runSimulation(idx) {
+  const sim = window._simList[idx];
+  if(!sim) return;
+  const sandboxWrap = document.getElementById('sim-sandbox-wrap');
+  const frame = document.getElementById('sim-frame');
+  const titleEl = document.getElementById('sim-title');
+  sandboxWrap.style.display = 'block';
+  titleEl.textContent = '🔬 ' + sim.title;
+  frame.srcdoc = '<html><body style="background:#0a0a0e;color:#e8e8f0;font-family:monospace;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div class="spinner" style="width:24px;height:24px;border:2px solid #333;border-top:2px solid #00e5cc;border-radius:50%;animation:spin 0.8s linear infinite"></div><style>@keyframes spin{to{transform:rotate(360deg)}}</style></body></html>';
+  try {
+    const data = await api('POST', '/api/ai/simulate', { concept: _lastExplainConcept, simulation: sim.title });
+    _lastSimCode = data.code;
+    frame.srcdoc = data.code;
+    sandboxWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } catch(e) {
+    frame.srcdoc = '<html><body style="background:#0a0a0e;color:#ff3366;font-family:monospace;padding:20px"><h2>Simulation Error</h2><p>' + e.message + '</p></body></html>';
+  }
+}
+
+function closeSim() {
+  document.getElementById('sim-sandbox-wrap').style.display = 'none';
+  document.getElementById('sim-frame').srcdoc = '';
+}
+
+// ── SAVE/LOAD SIMULATIONS ──────────────────────────────────
+function getSavedSims() { return JSON.parse(localStorage.getItem('malik-simulations') || '{}'); }
+function saveCurrentSim() {
+  if(!_lastSimCode) { showNotif('No simulation to save'); return; }
+  const titleEl = document.getElementById('sim-title');
+  const name = titleEl.textContent.replace('🔬 ','').trim() + ' — ' + _lastExplainConcept;
+  const sims = getSavedSims();
+  sims[name] = { code: _lastSimCode, concept: _lastExplainConcept, date: new Date().toISOString() };
+  localStorage.setItem('malik-simulations', JSON.stringify(sims));
+  showNotif('Simulation saved: ' + name);
+  renderSavedSims();
+}
+
+function toggleSavedSims() {
+  const c = document.getElementById('saved-sims-container');
+  c.style.display = c.style.display === 'none' ? 'block' : 'none';
+  if(c.style.display === 'block') renderSavedSims();
+}
+
+function renderSavedSims() {
+  const c = document.getElementById('saved-sims-container');
+  if(!c) return;
+  const sims = getSavedSims();
+  const keys = Object.keys(sims);
+  if(!keys.length) { c.innerHTML = '<div style="color:var(--muted2);font-size:12px">No saved simulations yet.</div>'; return; }
+  c.innerHTML = keys.map(k =>
+    '<div class="saved-sim-item" onclick="loadSavedSim(\'' + k.replace(/'/g, "\\'") + '\')">' +
+    '<div><div style="font-size:12px;font-weight:700;color:var(--text)">' + k + '</div>' +
+    '<div style="font-size:9px;color:var(--muted)">' + new Date(sims[k].date).toLocaleString('en-GB') + '</div></div>' +
+    '<div style="display:flex;gap:6px"><button class="btn btn-lime btn-sm">▶ Run</button>' +
+    '<button class="btn btn-orange btn-sm" onclick="event.stopPropagation();deleteSavedSim(\'' + k.replace(/'/g, "\\'") + '\')">🗑</button></div></div>'
+  ).join('');
+}
+
+function loadSavedSim(name) {
+  const sims = getSavedSims();
+  if(!sims[name]) return;
+  _lastSimCode = sims[name].code;
+  _lastExplainConcept = sims[name].concept || '';
+  document.getElementById('sim-sandbox-wrap').style.display = 'block';
+  document.getElementById('sim-title').textContent = '🔬 ' + name;
+  document.getElementById('sim-frame').srcdoc = sims[name].code;
+  showNotif('Loaded: ' + name);
+}
+
+function deleteSavedSim(name) {
+  if(!confirm('Delete simulation: ' + name + '?')) return;
+  const sims = getSavedSims();
+  delete sims[name];
+  localStorage.setItem('malik-simulations', JSON.stringify(sims));
+  renderSavedSims();
+  showNotif('Deleted: ' + name);
+}
+
+document.addEventListener('keydown', e => {
+  if(e.key === 'Enter' && document.activeElement?.id === 'study-q') studyExplain();
+});
 function deleteNoteSlot() {
   const sel = document.getElementById('notes-slot-select');
   if(!sel || !sel.value) { showNotif('Select a note to delete'); return; }
@@ -1868,16 +2097,7 @@ if(mlEl) mlEl.innerHTML = mlPath.map(s => `
     <div style="font-size:10px;color:var(--gold);white-space:nowrap;padding-top:2px">${s.dur}</div>
   </div>`).join('');
 
-// ── STUDY EXPLAIN ────────────────────────────────────────────────
-async function studyExplain() {
-  const concept = document.getElementById('study-q').value.trim();
-  const level = document.getElementById('study-level').value;
-  if(!concept) { showNotif('Enter a concept first'); return; }
-  await askAI('/api/ai/explain', { concept, level }, document.getElementById('study-answer'));
-}
-document.addEventListener('keydown', e => {
-  if(e.key === 'Enter' && document.activeElement?.id === 'study-q') studyExplain();
-});
+
 
 // ── QURAN ────────────────────────────────────────────────────────
 let qState = { sabaq:0, sabqi:0, manzil:0, tilawah:0 };
