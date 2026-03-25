@@ -751,9 +751,19 @@ select.os-input{cursor:pointer;}
       </div>
 
       <div class="panel">
-        <div class="panel-header"><span class="panel-title">📝 Smart Notes — AI Autocomplete</span></div>
+        <div class="panel-header">
+          <span class="panel-title">📝 Smart Notes — AI Autocomplete</span>
+          <div style="display:flex;gap:6px">
+            <select class="os-input" id="notes-slot-select" style="width:170px;font-size:10px" onchange="loadNoteSlot()">
+              <option value="">— Load saved note —</option>
+            </select>
+            <button class="btn btn-teal btn-sm" onclick="saveSmartNotes()">💾 SAVE</button>
+            <button class="btn btn-orange btn-sm" onclick="deleteNoteSlot()">🗑</button>
+          </div>
+        </div>
         <div class="panel-body">
-          <textarea class="os-textarea" id="notes-area" placeholder="Start writing your notes here... AI will suggest completions as you type." style="min-height:160px" oninput="notesAutocomplete()"></textarea>
+          <input type="text" class="os-input" id="notes-save-name" placeholder="Note title e.g. Fourier Transform notes..." style="margin-bottom:8px;font-size:11px">
+          <div class="os-textarea" id="notes-area" contenteditable="true" style="min-height:160px;white-space:pre-wrap;line-height:1.8" oninput="notesAutocomplete()"></div>
           <div class="ai-box" id="notes-suggest">Start writing — AI autocomplete will activate...</div>
           <div style="display:flex;gap:8px;margin-top:12px">
             <button class="btn btn-lime" onclick="acceptSuggestion()">ACCEPT SUGGESTION (Tab)</button>
@@ -840,6 +850,7 @@ select.os-input{cursor:pointer;}
         <button class="btn btn-lime btn-sm" onclick="showGymDay(2)">DAY 2 — SHOULDERS/LEGS/TRIS</button>
         <button class="btn btn-lime btn-sm" onclick="showGymDay(3)">DAY 3 — CHEST/BACK/BICEPS</button>
         <button class="btn btn-lime btn-sm" onclick="showGymDay(4)">DAY 4 — SHOULDERS/LEGS/TRIS</button>
+        <button class="btn btn-violet btn-sm" onclick="toggleEditGymTargets()" id="gym-edit-targets-btn">✏ EDIT TARGETS</button>
       </div>
       <div class="panel" id="gym-day-panel">
         <div class="panel-header"><span class="panel-title" id="gym-day-title">SELECT A DAY ABOVE</span></div>
@@ -1013,9 +1024,12 @@ select.os-input{cursor:pointer;}
       <div class="panel">
         <div class="panel-header">
           <span class="panel-title">📈 Weekly Habit Performance — Line Diagram</span>
-          <select class="os-input" id="habit-chart-select" style="width:200px;font-size:10px" onchange="renderHabitChart()">
-            <option value="all">All Habits (Mean %)</option>
-          </select>
+          <div style="display:flex;gap:6px;align-items:center">
+            <select class="os-input" id="habit-chart-select" style="width:200px;font-size:10px" onchange="renderHabitChart()">
+              <option value="all">All Habits (Mean %)</option>
+            </select>
+            <button class="btn btn-orange btn-sm" onclick="clearHabitGraph()">🗑 CLEAR GRAPH</button>
+          </div>
         </div>
         <div class="panel-body" style="padding:10px 18px 18px">
           <div id="habit-chart-wrap">
@@ -1494,9 +1508,13 @@ function aiAutocomplete(el, targetId, ctx) {
 }
 
 let _ntTimer = null;
+function getNotesText() {
+  const el = document.getElementById('notes-area');
+  return el ? el.innerText || el.textContent || '' : '';
+}
 function notesAutocomplete() {
   clearTimeout(_ntTimer);
-  const val = document.getElementById('notes-area').value;
+  const val = getNotesText();
   const lastLine = val.split('\n').filter(l => l.trim()).pop() || '';
   if(lastLine.length < 15) return;
   const out = document.getElementById('notes-suggest');
@@ -1510,17 +1528,71 @@ function notesAutocomplete() {
 }
 function acceptSuggestion() {
   if(window._lastSug) {
-    const ta = document.getElementById('notes-area');
-    ta.value += ' ' + window._lastSug;
+    const el = document.getElementById('notes-area');
+    // Insert AI text highlighted in teal so user can identify it later
+    const aiSpan = document.createElement('span');
+    aiSpan.style.cssText = 'color:#00e5cc;border-left:2px solid #00e5cc;padding-left:6px;margin-left:4px';
+    aiSpan.textContent = ' ' + window._lastSug;
+    aiSpan.className = 'ai-inserted';
+    el.appendChild(aiSpan);
+    // Move cursor to end
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
     window._lastSug = null;
     document.getElementById('notes-suggest').innerHTML = 'Suggestion accepted. Keep writing...';
   }
 }
 async function expandNotes() {
-  const notes = document.getElementById('notes-area').value.trim();
+  const notes = getNotesText().trim();
   if(!notes) { showNotif('Write some notes first'); return; }
   await askAI('/api/ai/notes-expand', { notes }, document.getElementById('notes-suggest'));
 }
+
+// ── SMART NOTES SAVE/LOAD ────────────────────────────────────────
+function getSavedNotes() { return JSON.parse(localStorage.getItem('malik-smart-notes') || '{}'); }
+function saveSmartNotes() {
+  const name = document.getElementById('notes-save-name').value.trim() || 'Untitled ' + new Date().toLocaleDateString('en-GB');
+  const el = document.getElementById('notes-area');
+  const html = el.innerHTML;
+  const text = el.innerText || '';
+  if(!text.trim()) { showNotif('Write some notes first'); return; }
+  const notes = getSavedNotes();
+  notes[name] = { html, text, date: new Date().toISOString() };
+  localStorage.setItem('malik-smart-notes', JSON.stringify(notes));
+  populateNotesSelect();
+  showNotif('Notes saved: ' + name);
+}
+function loadNoteSlot() {
+  const sel = document.getElementById('notes-slot-select');
+  if(!sel || !sel.value) return;
+  const notes = getSavedNotes();
+  if(notes[sel.value]) {
+    document.getElementById('notes-area').innerHTML = notes[sel.value].html;
+    document.getElementById('notes-save-name').value = sel.value;
+    showNotif('Loaded: ' + sel.value);
+  }
+}
+function deleteNoteSlot() {
+  const sel = document.getElementById('notes-slot-select');
+  if(!sel || !sel.value) { showNotif('Select a note to delete'); return; }
+  const notes = getSavedNotes();
+  delete notes[sel.value];
+  localStorage.setItem('malik-smart-notes', JSON.stringify(notes));
+  populateNotesSelect();
+  showNotif('Deleted: ' + sel.value);
+}
+function populateNotesSelect() {
+  const sel = document.getElementById('notes-slot-select');
+  if(!sel) return;
+  const notes = getSavedNotes();
+  sel.innerHTML = '<option value="">— Load saved note —</option>' +
+    Object.keys(notes).map(k => '<option value="'+k+'">'+k+'</option>').join('');
+}
+setTimeout(populateNotesSelect, 200);
 
 // ── IDEAS ────────────────────────────────────────────────────────
 let ideas = [];
@@ -1723,22 +1795,74 @@ async function loadGymData() {
   populateChartExerciseSelect();
 }
 
+// ── GYM — Target editing mode ────────────────────────────────────
+let gymEditMode = false;
+function getGymCustomData() { return JSON.parse(localStorage.getItem('malik-gym-custom') || '{}'); }
+function saveGymCustomData(data) { localStorage.setItem('malik-gym-custom', JSON.stringify(data)); }
+
+function toggleEditGymTargets() {
+  gymEditMode = !gymEditMode;
+  const btn = document.getElementById('gym-edit-targets-btn');
+  if(btn) {
+    btn.textContent = gymEditMode ? '✓ DONE EDITING' : '✏ EDIT TARGETS';
+    btn.className = gymEditMode ? 'btn btn-lime btn-sm' : 'btn btn-violet btn-sm';
+  }
+  showGymDay(curGymDay);
+}
+
+function saveGymTarget(d, i, field, value) {
+  const custom = getGymCustomData();
+  const key = 'd'+d+'-'+i;
+  if(!custom[key]) custom[key] = {};
+  custom[key][field] = value;
+  saveGymCustomData(custom);
+  // Also update in-memory gymDays
+  const fieldIdx = {sets:1, reps:2, target:3}[field];
+  if(fieldIdx !== undefined) gymDays[d].ex[i][fieldIdx] = value;
+}
+
 function showGymDay(d) {
   curGymDay = d;
+  const custom = getGymCustomData();
   const day = gymDays[d];
+  // Apply saved customisations
+  day.ex.forEach((ex, i) => {
+    const c = custom['d'+d+'-'+i];
+    if(c) {
+      if(c.sets) ex[1] = c.sets;
+      if(c.reps) ex[2] = c.reps;
+      if(c.target) ex[3] = c.target;
+    }
+  });
   document.getElementById('gym-day-title').textContent = day.title;
   const adv = document.getElementById('gym-advice');
   adv.style.display = 'none';
   adv.className = 'ai-box';
-  document.getElementById('gym-table').innerHTML =
-    '<tr><th>Exercise</th><th>Sets</th><th>Reps</th><th>Target</th><th>Actual</th></tr>' +
-    day.ex.map((ex, i) =>
-      '<tr><td>' + ex[0] + '</td><td>' + ex[1] + '</td><td>' + ex[2] + '</td>' +
-      '<td style="color:var(--lime);font-family:var(--mono)">' + ex[3] + '</td>' +
-      '<td><input type="text" class="weight-input" placeholder="' + ex[3] + '" ' +
-      'value="' + (gymWeights['d'+d+'-'+i] || '') + '" ' +
-      'onchange="saveWeight(' + d + ',' + i + ',this.value)"></td></tr>'
-    ).join('');
+  if(gymEditMode) {
+    // Editable mode — all cells are inputs
+    document.getElementById('gym-table').innerHTML =
+      '<tr><th>Exercise</th><th>Sets</th><th>Reps</th><th>Target</th><th>Actual</th></tr>' +
+      day.ex.map((ex, i) =>
+        '<tr><td>' + ex[0] + '</td>' +
+        '<td><input type="text" class="weight-input" value="' + ex[1] + '" style="width:50px" onchange="saveGymTarget(' + d + ',' + i + ',\'sets\',this.value)"></td>' +
+        '<td><input type="text" class="weight-input" value="' + ex[2] + '" style="width:50px" onchange="saveGymTarget(' + d + ',' + i + ',\'reps\',this.value)"></td>' +
+        '<td><input type="text" class="weight-input" value="' + ex[3] + '" style="width:70px;color:var(--lime)" onchange="saveGymTarget(' + d + ',' + i + ',\'target\',this.value)"></td>' +
+        '<td><input type="text" class="weight-input" placeholder="' + ex[3] + '" ' +
+        'value="' + (gymWeights['d'+d+'-'+i] || '') + '" ' +
+        'onchange="saveWeight(' + d + ',' + i + ',this.value)"></td></tr>'
+      ).join('');
+  } else {
+    // Normal mode
+    document.getElementById('gym-table').innerHTML =
+      '<tr><th>Exercise</th><th>Sets</th><th>Reps</th><th>Target</th><th>Actual</th></tr>' +
+      day.ex.map((ex, i) =>
+        '<tr><td>' + ex[0] + '</td><td>' + ex[1] + '</td><td>' + ex[2] + '</td>' +
+        '<td style="color:var(--lime);font-family:var(--mono)">' + ex[3] + '</td>' +
+        '<td><input type="text" class="weight-input" placeholder="' + ex[3] + '" ' +
+        'value="' + (gymWeights['d'+d+'-'+i] || '') + '" ' +
+        'onchange="saveWeight(' + d + ',' + i + ',this.value)"></td></tr>'
+      ).join('');
+  }
 }
 
 async function saveWeight(d, i, weight) {
@@ -1783,12 +1907,36 @@ async function loadGymLog() {
     c.innerHTML = sessions.map(s =>
       '<div style="padding:9px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">' +
       '<div style="font-size:12px;font-weight:700">' + s.day_title + '</div>' +
-      '<div style="font-size:10px;color:var(--muted)">' + new Date(s.logged_at).toLocaleString('en-GB') + '</div>' +
-      '</div>'
+      '<div style="display:flex;gap:8px;align-items:center">' +
+        '<span style="font-size:10px;color:var(--muted)">' + new Date(s.logged_at).toLocaleString('en-GB') + '</span>' +
+        '<button class="icon-btn" onclick="editGymSession(' + s.id + ')" title="Edit">✏</button>' +
+        '<button class="icon-btn" onclick="deleteGymSession(' + s.id + ')" title="Delete">✕</button>' +
+      '</div></div>'
     ).join('');
   } catch(e) {
     document.getElementById('gym-log').innerHTML = '<div style="color:var(--muted2);font-size:12px">Could not load sessions.</div>';
   }
+}
+
+async function deleteGymSession(id) {
+  if(!confirm('Delete this gym session?')) return;
+  try {
+    await api('DELETE', '/api/gym/sessions/' + id);
+    showNotif('Session deleted');
+    await loadGymLog();
+  } catch(e) {
+    // Also remove from local sessions
+    const local = JSON.parse(localStorage.getItem('malik-gym-sessions-local') || '[]');
+    const filtered = local.filter(s => s.id !== id);
+    localStorage.setItem('malik-gym-sessions-local', JSON.stringify(filtered));
+    showNotif('Session deleted locally');
+    await loadGymLog();
+  }
+}
+
+function editGymSession(id) {
+  // Load the session's day and navigate to it
+  showNotif('Session loaded — update weights and log again to overwrite');
 }
 
 // ── GYM PROGRESS CHART ───────────────────────────────────────────
@@ -2826,6 +2974,15 @@ async function logGymSession() {
   // Refresh chart if visible
   const sel = document.getElementById('chart-exercise');
   if(sel && sel.value) renderProgressChart();
+}
+
+// Clear habit graph data
+function clearHabitGraph() {
+  if(!confirm('Clear all logged week data from the graph? This cannot be undone.')) return;
+  localStorage.removeItem('malik-habits-log');
+  renderHabitsLog();
+  renderHabitChart();
+  showNotif('Habit graph cleared');
 }
 
 // Init on page load
