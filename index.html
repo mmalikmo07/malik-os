@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MALIK·OS — Personal Command Intelligence</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Lora:ital,wght@0,400;0,600;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 <style>
 /* ═══════════════════════════════════════
    DESIGN TOKENS — Student OS v2 palette
@@ -797,7 +800,22 @@ select.os-input{cursor:pointer;}
             </select>
             <button class="btn btn-lime" onclick="studyExplain()">EXPLAIN ►</button>
           </div>
-          <div class="ai-box" id="study-answer" style="min-height:100px">Ask anything — concepts, intuition, applications, maths behind it...</div>
+          <div class="ai-box" id="study-answer" style="min-height:100px;max-height:500px;overflow-y:auto">Ask anything — concepts, intuition, applications, maths behind it...</div>
+          <div id="sim-suggestions" style="display:none;margin-top:14px">
+            <div style="font-size:9px;letter-spacing:0.2em;color:var(--teal);text-transform:uppercase;margin-bottom:8px">🔬 Simulatable Concepts</div>
+            <div id="sim-cards"></div>
+          </div>
+          <div id="sim-sandbox-wrap" style="display:none;margin-top:14px">
+            <div class="sim-sandbox">
+              <div class="sim-toolbar">
+                <span style="font-size:10px;color:var(--lime);font-weight:700;letter-spacing:0.1em" id="sim-title">🔬 SIMULATION</span>
+                <div style="flex:1"></div>
+                <button class="btn btn-teal btn-sm" onclick="saveCurrentSim()">💾 Save</button>
+                <button class="btn btn-orange btn-sm" onclick="closeSim()">✕ Close</button>
+              </div>
+              <iframe id="sim-frame" sandbox="allow-scripts"></iframe>
+            </div>
+          </div>
           <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
             <input type="text" class="os-input" id="concept-save-name" placeholder="Concept name to save..." style="flex:1;font-size:11px">
             <button class="btn btn-teal btn-sm" onclick="saveConceptNote()">💾 SAVE TO CONCEPTS</button>
@@ -1819,6 +1837,18 @@ async function studyExplain() {
     // Render rich markdown
     ansEl.innerHTML = '<div class="ai-rich">' + renderMarkdown(data.text) + '</div>';
     ansEl.className = 'ai-box';
+    // Render LaTeX equations
+    if(typeof renderMathInElement === 'function') {
+      renderMathInElement(ansEl, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false},
+          {left: '\\(', right: '\\)', display: false},
+          {left: '\\[', right: '\\]', display: true}
+        ],
+        throwOnError: false
+      });
+    }
     // Scroll to bottom of answer
     ansEl.scrollTop = ansEl.scrollHeight;
     // Now ask for simulation suggestions
