@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MALIK·OS — Personal Command Intelligence</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Lora:ital,wght@0,400;0,600;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════
    DESIGN TOKENS — Student OS v2 palette
@@ -321,7 +321,7 @@ select.os-input{cursor:pointer;}
 /* ═══════════════════════════════════════
    MINDMAP
 ═══════════════════════════════════════ */
-#mindmap-svg{width:100%;height:480px;background:var(--s2);border:1px solid var(--border);}
+#mindmap-svg{width:100%;height:480px;background:#12121a;border:none;}
 
 /* Mindmap overlay controls — Google Maps style */
 .mm-controls{
@@ -518,7 +518,39 @@ select.os-input{cursor:pointer;}
   color:rgba(200,255,0,0.025);letter-spacing:0.05em;white-space:nowrap;pointer-events:none;
 }
 .hero-greeting{font-size:10px;color:var(--muted);letter-spacing:0.3em;text-transform:uppercase;margin-bottom:6px;}
-.hero-name{font-family:var(--display);font-size:clamp(28px,5vw,52px);color:var(--lime);letter-spacing:0.06em;line-height:1;}
+.hero-name{font-family:'Playfair Display',var(--serif);font-size:clamp(28px,5vw,52px);color:var(--lime);letter-spacing:0.02em;line-height:1;font-weight:600;font-style:italic;}
+
+/* AI ORBS & POPUP */
+.ai-orb{
+  position:absolute;bottom:12px;right:12px;width:36px;height:36px;
+  border-radius:50%;background:linear-gradient(135deg,#00e5cc,#00b89c);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;box-shadow:0 2px 12px rgba(0,229,204,0.3);z-index:20;
+  transition:all 0.3s ease;font-family:var(--display);font-size:18px;color:#060608;font-weight:700;
+}
+.ai-orb:hover{transform:scale(1.12);box-shadow:0 4px 20px rgba(0,229,204,0.5);}
+.ai-orb.thinking{animation:orb-pulse 1.2s infinite;}
+.ai-orb.has-suggestion{animation:orb-glow 2s infinite;}
+@keyframes orb-pulse{0%,100%{box-shadow:0 2px 12px rgba(0,229,204,0.3);}50%{box-shadow:0 4px 24px rgba(0,229,204,0.6);}}
+@keyframes orb-glow{0%,100%{box-shadow:0 2px 12px rgba(0,229,204,0.4);transform:scale(1);}50%{box-shadow:0 4px 24px rgba(200,255,0,0.5);transform:scale(1.08);}}
+.ai-popup{
+  position:absolute;bottom:56px;right:8px;width:340px;max-width:90%;
+  background:var(--s1);border:1px solid var(--teal);border-radius:10px;
+  padding:14px;box-shadow:0 8px 32px rgba(0,0,0,0.5);z-index:25;
+  display:none;animation:popup-in 0.2s ease;
+}
+.ai-popup.show{display:block;}
+@keyframes popup-in{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.ai-popup-header{font-size:9px;letter-spacing:0.2em;color:var(--teal);text-transform:uppercase;margin-bottom:8px;}
+.ai-popup-text{font-size:12px;color:var(--text);line-height:1.7;margin-bottom:12px;}
+.ai-popup-btns{display:flex;gap:8px;}
+.ai-popup-btn{padding:6px 16px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:none;letter-spacing:0.1em;transition:all 0.15s;}
+.ai-popup-btn.accept{background:var(--teal);color:#060608;}
+.ai-popup-btn.accept:hover{background:var(--lime);}
+.ai-popup-btn.dismiss{background:transparent;border:1px solid var(--border2);color:var(--muted);}
+.ai-popup-btn.dismiss:hover{border-color:var(--orange);color:var(--orange);}
+.ai-popup-btn.expand{background:transparent;border:1px solid var(--gold);color:var(--gold);}
+.ai-popup-btn.expand:hover{background:rgba(251,191,36,0.1);}
 .hero-sub{font-size:12px;color:var(--muted);margin-top:6px;max-width:500px;line-height:1.8;}
 </style>
 </head>
@@ -762,17 +794,26 @@ select.os-input{cursor:pointer;}
               <option value="">— Load saved note —</option>
             </select>
             <button class="btn btn-teal btn-sm" onclick="saveSmartNotes()">💾 SAVE</button>
+            <button class="btn btn-violet btn-sm" onclick="newSmartNote()">➕ NEW</button>
             <button class="btn btn-orange btn-sm" onclick="deleteNoteSlot()">🗑</button>
           </div>
         </div>
         <div class="panel-body">
           <input type="text" class="os-input" id="notes-save-name" placeholder="Note title e.g. Fourier Transform notes..." style="margin-bottom:8px;font-size:11px">
-          <div class="os-textarea" id="notes-area" contenteditable="true" style="min-height:160px;white-space:pre-wrap;line-height:1.8" oninput="notesAutocomplete()"></div>
-          <div class="ai-box" id="notes-suggest">Start writing — AI autocomplete will activate...</div>
-          <div style="display:flex;gap:8px;margin-top:12px">
-            <button class="btn btn-lime" onclick="acceptSuggestion()">ACCEPT SUGGESTION (Tab)</button>
-            <button class="btn btn-gold" onclick="expandNotes()">⚡ EXPAND WITH AI</button>
-            <button class="btn btn-violet btn-sm" onclick="newSmartNote()">➕ NEW NOTE</button>
+          <div style="position:relative">
+            <div class="os-textarea" id="notes-area" contenteditable="true" style="min-height:160px;white-space:pre-wrap;line-height:1.8" oninput="notesAutocomplete()"></div>
+            <!-- Grammarly-style AI Orb -->
+            <div class="ai-orb" id="ai-orb" onclick="toggleAiPopup()" title="AI Assistant">M</div>
+            <!-- AI Suggestion Popup -->
+            <div class="ai-popup" id="ai-popup">
+              <div class="ai-popup-header" id="ai-popup-header">✨ AI Suggestion</div>
+              <div class="ai-popup-text" id="ai-popup-text">Start writing — AI will suggest completions...</div>
+              <div class="ai-popup-btns">
+                <button class="ai-popup-btn accept" onclick="acceptSuggestion()">✓ Accept</button>
+                <button class="ai-popup-btn dismiss" onclick="dismissSuggestion()">✕ Dismiss</button>
+                <button class="ai-popup-btn expand" onclick="expandNotes()">⚡ Expand</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1117,13 +1158,42 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
-// ── GREETING (time-based) ────────────────────────────────────────
+// ── GREETING (time-based, creative) ──────────────────────────────
 function getGreeting() {
   const h = new Date().getHours();
-  if(h >= 4  && h < 12) return 'Good Morning, Malik';
-  if(h >= 12 && h < 17) return 'Good Afternoon, Malik';
-  if(h >= 17 && h < 21) return 'Good Evening, Malik';
-  return 'Still Up, Malik?';
+  const d = new Date().getDay(); // 0=Sun
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+  if(h >= 4 && h < 7) return pick([
+    'Early Bird, Malik.', 'Dawn Protocol Active.', 'Rise & Execute, Malik.',
+    'Fajr Energy. Let\'s Build.', 'The World\'s Still Sleeping, Malik.'
+  ]);
+  if(h >= 7 && h < 12) return pick([
+    'Good Morning, Malik.', 'Morning, Commander.', 'Systems Online. Morning Briefing.',
+    'Sunrise Ops — Ready, Malik?', 'A New Day to Dominate.',
+    'Fresh Start. Fresh Grind.', 'Morning Fuel Loaded.'
+  ]);
+  if(h >= 12 && h < 14) return pick([
+    'Afternoon Locked In.', 'Midday Momentum, Malik.', 'Lunch Break? Or Grind Mode?',
+    'Halfway Through. Keep Pushing.'
+  ]);
+  if(h >= 14 && h < 17) return pick([
+    'Deep Work Hours, Malik.', 'Afternoon Focus Mode.', 'The Grind Continues.',
+    'Peak Performance Window.', 'Stay Sharp, Malik.'
+  ]);
+  if(h >= 17 && h < 20) return pick([
+    'Evening Mode, Malik.', 'Golden Hour Productivity.', 'Winding Down or Winding Up?',
+    'Evening Review Time.', 'Sunset Grind Active.'
+  ]);
+  if(h >= 20 && h < 23) return pick([
+    'Night Shift, Malik.', 'Burning the Midnight Oil.', 'Late Night Engineering.',
+    'Night Owl Mode.', 'The Best Ideas Come at Night.'
+  ]);
+  return pick([
+    'Still Up, Malik?', 'Sleep is Overrated.', 'The Night is Yours, Malik.',
+    '3AM Grind. Respect.', 'Insomniac Mode Activated.',
+    'While They Sleep, You Build.'
+  ]);
 }
 const greetEl = document.querySelector('.hero-name');
 if(greetEl) greetEl.textContent = getGreeting();
@@ -1539,30 +1609,44 @@ function getNotesText() {
   const el = document.getElementById('notes-area');
   return el ? el.innerText || el.textContent || '' : '';
 }
+function updateOrb(state) {
+  const orb = document.getElementById('ai-orb');
+  if(!orb) return;
+  orb.classList.remove('thinking','has-suggestion');
+  if(state === 'thinking') orb.classList.add('thinking');
+  else if(state === 'ready') orb.classList.add('has-suggestion');
+}
+function toggleAiPopup() {
+  const popup = document.getElementById('ai-popup');
+  if(popup) popup.classList.toggle('show');
+}
 function notesAutocomplete() {
   clearTimeout(_ntTimer);
   const val = getNotesText();
   const lastLine = val.split('\n').filter(l => l.trim()).pop() || '';
-  if(lastLine.length < 15) return;
-  const out = document.getElementById('notes-suggest');
-  out.innerHTML = '<span class="spinner"></span> Suggesting...';
+  if(lastLine.length < 15) { updateOrb('idle'); return; }
+  updateOrb('thinking');
   _ntTimer = setTimeout(async () => {
-    const data = await api('POST', '/api/ai/notes-complete', { lastLine });
-    out.innerHTML = '→ ' + data.text;
-    out.className = 'ai-box';
-    window._lastSug = data.text;
+    try {
+      const data = await api('POST', '/api/ai/notes-complete', { lastLine });
+      window._lastSug = data.text;
+      document.getElementById('ai-popup-text').textContent = data.text;
+      document.getElementById('ai-popup-header').textContent = '✨ AI Suggestion';
+      updateOrb('ready');
+      // Auto-show popup when suggestion arrives
+      const popup = document.getElementById('ai-popup');
+      if(popup) popup.classList.add('show');
+    } catch(e) { updateOrb('idle'); }
   }, 1500);
 }
 function acceptSuggestion() {
   if(window._lastSug) {
     const el = document.getElementById('notes-area');
-    // Insert AI text highlighted in teal so user can identify it later
     const aiSpan = document.createElement('span');
     aiSpan.style.cssText = 'color:#00e5cc;border-left:2px solid #00e5cc;padding-left:6px;margin-left:4px';
     aiSpan.textContent = ' ' + window._lastSug;
     aiSpan.className = 'ai-inserted';
     el.appendChild(aiSpan);
-    // Move cursor to end
     const range = document.createRange();
     range.selectNodeContents(el);
     range.collapse(false);
@@ -1570,13 +1654,36 @@ function acceptSuggestion() {
     sel.removeAllRanges();
     sel.addRange(range);
     window._lastSug = null;
-    document.getElementById('notes-suggest').innerHTML = 'Suggestion accepted. Keep writing...';
+    updateOrb('idle');
+    const popup = document.getElementById('ai-popup');
+    if(popup) popup.classList.remove('show');
+    showNotif('Suggestion accepted');
   }
+}
+function dismissSuggestion() {
+  window._lastSug = null;
+  updateOrb('idle');
+  const popup = document.getElementById('ai-popup');
+  if(popup) popup.classList.remove('show');
+  document.getElementById('ai-popup-text').textContent = 'Dismissed. Keep writing for more suggestions...';
 }
 async function expandNotes() {
   const notes = getNotesText().trim();
   if(!notes) { showNotif('Write some notes first'); return; }
-  await askAI('/api/ai/notes-expand', { notes }, document.getElementById('notes-suggest'));
+  updateOrb('thinking');
+  const popup = document.getElementById('ai-popup');
+  document.getElementById('ai-popup-header').textContent = '⚡ Expanding notes...';
+  document.getElementById('ai-popup-text').textContent = 'Generating expanded content...';
+  if(popup) popup.classList.add('show');
+  try {
+    const data = await api('POST', '/api/ai/notes-expand', { notes });
+    if(data && data.text) {
+      window._lastSug = data.text;
+      document.getElementById('ai-popup-text').textContent = data.text;
+      document.getElementById('ai-popup-header').textContent = '✨ AI Expansion Ready';
+      updateOrb('ready');
+    }
+  } catch(e) { updateOrb('idle'); showNotif('Expand failed', 'error'); }
 }
 
 // ── SMART NOTES SAVE/LOAD ────────────────────────────────────────
