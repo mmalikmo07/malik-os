@@ -834,6 +834,272 @@
 
 
     /* ═══════════════════════════════════════
+   TASK DATABASE
+═══════════════════════════════════════ */
+    .task-filters {
+      display: flex;
+      gap: 2px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .task-filter-btn {
+      padding: 5px 14px;
+      font-family: var(--mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border: 1px solid var(--border2);
+      background: transparent;
+      color: var(--muted);
+      transition: all 0.15s;
+    }
+
+    .task-filter-btn:hover {
+      color: var(--text);
+      border-color: var(--border2);
+    }
+
+    .task-filter-btn.active {
+      background: rgba(200, 255, 0, 0.1);
+      border-color: var(--lime);
+      color: var(--lime);
+    }
+
+    .task-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    .task-table th {
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      padding: 7px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      text-transform: uppercase;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: color 0.15s;
+      user-select: none;
+    }
+
+    .task-table th:hover {
+      color: var(--lime);
+    }
+
+    .task-table th:first-child {
+      width: 32px;
+      text-align: center;
+    }
+
+    .task-table td {
+      padding: 7px 10px;
+      font-size: 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    .task-table tr:hover td {
+      background: rgba(200, 255, 0, 0.015);
+    }
+
+    .task-table tr.task-done td {
+      opacity: 0.4;
+    }
+
+    .task-table tr.task-done .task-name-text {
+      text-decoration: line-through;
+    }
+
+    .task-table tr.task-overdue .task-due-text {
+      color: var(--red);
+      font-weight: 700;
+    }
+
+    .task-check {
+      width: 16px;
+      height: 16px;
+      border: 1.5px solid var(--border2);
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+      border-radius: 3px;
+    }
+
+    .task-check:hover {
+      border-color: var(--lime);
+    }
+
+    .task-check.checked {
+      background: var(--lime);
+      border-color: var(--lime);
+    }
+
+    .task-check.checked::after {
+      content: '✓';
+      color: #060608;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .task-name-text {
+      font-weight: 700;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .task-name-text:hover {
+      color: var(--lime);
+    }
+
+    .task-area-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      border: 1px solid;
+      border-radius: 3px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .task-priority-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .task-repeat-badge {
+      font-size: 9px;
+      color: var(--violet);
+      letter-spacing: 0.05em;
+    }
+
+    .task-add-row {
+      display: flex;
+      gap: 8px;
+      padding: 10px 0 4px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .task-add-row .os-input {
+      font-size: 11px;
+    }
+
+    .task-props-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(6, 6, 8, 0.7);
+      z-index: 3000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+
+    .task-props-overlay.show {
+      display: flex;
+    }
+
+    .task-props-modal {
+      background: var(--s1);
+      border: 1px solid var(--border2);
+      border-top: 2px solid var(--lime);
+      width: 420px;
+      max-width: 92vw;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 0;
+      animation: popup-in 0.2s ease;
+    }
+
+    .task-props-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .task-props-header h3 {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: var(--lime);
+      text-transform: uppercase;
+      font-family: var(--mono);
+    }
+
+    .task-props-body {
+      padding: 18px;
+    }
+
+    .task-prop-group {
+      margin-bottom: 14px;
+    }
+
+    .task-prop-label {
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    .task-due-text {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .task-actions-cell {
+      display: flex;
+      gap: 4px;
+      justify-content: flex-end;
+    }
+
+    .task-icon-btn {
+      background: none;
+      border: 1px solid transparent;
+      color: var(--muted2);
+      padding: 2px 6px;
+      cursor: pointer;
+      font-size: 11px;
+      transition: all 0.15s;
+      border-radius: 3px;
+    }
+
+    .task-icon-btn:hover {
+      border-color: var(--border2);
+      color: var(--text);
+    }
+
+    .task-icon-btn.del:hover {
+      border-color: var(--orange);
+      color: var(--orange);
+    }
+
+    @media(max-width:700px) {
+      .task-table th:nth-child(5),
+      .task-table td:nth-child(5),
+      .task-table th:nth-child(6),
+      .task-table td:nth-child(6) {
+        display: none;
+      }
+    }
+
+    /* ═══════════════════════════════════════
    PROJECT CARDS
 ═══════════════════════════════════════ */
     .project-card {
@@ -1708,10 +1974,14 @@
           </div>
         </div>
 
-        <div class="grid-3" style="margin-bottom:14px">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px">
           <div class="stat-card">
             <div class="stat-val" id="home-projects">0</div>
             <div class="stat-label">Projects Active</div>
+          </div>
+          <div class="stat-card" style="border-left-color:var(--orange)">
+            <div class="stat-val" style="color:var(--orange)" id="home-tasks">0</div>
+            <div class="stat-label">Tasks Today</div>
           </div>
           <div class="stat-card" style="border-left-color:var(--gold)">
             <div class="stat-val" style="color:var(--gold)" id="home-streak">0</div>
@@ -1736,6 +2006,77 @@
             <div class="ai-box" id="quick-answer" style="min-height:60px;margin-top:12px">
               <em style="color:var(--muted2)">Ask anything — AI is online via Railway...</em>
             </div>
+          </div>
+        </div>
+
+        <!-- TASK DATABASE -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">📋 Tasks — Command Centre</span>
+            <div style="display:flex;gap:6px;align-items:center">
+              <span style="font-family:var(--display);font-size:16px;color:var(--lime)" id="tasks-active-count">0</span>
+              <span style="font-size:9px;color:var(--muted);letter-spacing:0.1em">ACTIVE</span>
+            </div>
+          </div>
+          <div class="panel-body" style="padding:12px 18px 18px">
+            <div class="task-filters" id="task-filters">
+              <button class="task-filter-btn active" onclick="setTaskFilter('all',this)">ALL</button>
+              <button class="task-filter-btn" onclick="setTaskFilter('today',this)">TODAY</button>
+              <button class="task-filter-btn" onclick="setTaskFilter('upcoming',this)">UPCOMING</button>
+              <button class="task-filter-btn" onclick="setTaskFilter('overdue',this)">OVERDUE</button>
+              <button class="task-filter-btn" onclick="setTaskFilter('done',this)">DONE</button>
+            </div>
+
+            <div style="overflow-x:auto">
+              <table class="task-table" id="task-table">
+                <thead>
+                  <tr>
+                    <th style="width:32px">☐</th>
+                    <th style="width:auto" onclick="sortTasks('name')">Task ▾</th>
+                    <th style="width:100px" onclick="sortTasks('due')">Due ▾</th>
+                    <th style="width:130px" onclick="sortTasks('area')">Area ▾</th>
+                    <th style="width:70px" onclick="sortTasks('priority')">Priority ▾</th>
+                    <th style="width:70px">Repeat</th>
+                    <th style="width:60px"></th>
+                  </tr>
+                </thead>
+                <tbody id="task-tbody"></tbody>
+              </table>
+            </div>
+
+            <!-- ADD TASK ROW -->
+            <div class="task-add-row">
+              <input type="text" class="os-input" id="task-new-name" placeholder="+ Add a task..." style="flex:2;min-width:160px" onkeydown="if(event.key==='Enter')addTask()">
+              <input type="date" class="os-input" id="task-new-due" style="width:130px">
+              <select class="os-input" id="task-new-area" style="width:120px" onchange="toggleTaskModuleSelect()">
+                <option value="">Area...</option>
+                <option value="Uni">🎓 Uni Work</option>
+                <option value="Project">⚗️ Project</option>
+                <option value="Engineering">🔧 Eng. Skill</option>
+                <option value="Deen">📖 Deen</option>
+                <option value="Personal">🏠 Personal</option>
+              </select>
+              <select class="os-input" id="task-new-module" style="width:120px;display:none">
+                <option value="">Module...</option>
+              </select>
+              <select class="os-input" id="task-new-priority" style="width:90px">
+                <option value="medium">● Medium</option>
+                <option value="high">● High</option>
+                <option value="low">● Low</option>
+              </select>
+              <button class="btn btn-lime btn-sm" onclick="addTask()">+ ADD</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TASK PROPERTIES MODAL -->
+        <div class="task-props-overlay" id="task-props-overlay" onclick="if(event.target===this)closeTaskProps()">
+          <div class="task-props-modal">
+            <div class="task-props-header">
+              <h3>⚙ Task Properties</h3>
+              <button class="task-icon-btn" onclick="closeTaskProps()" style="font-size:14px">✕</button>
+            </div>
+            <div class="task-props-body" id="task-props-body"></div>
           </div>
         </div>
 
@@ -4483,6 +4824,365 @@
     renderHabitsLog();
     setTimeout(() => { renderHabitChart(); }, 200);
 
+
+    // ══════════════════════════════════════════════════════════════════
+    // TASK DATABASE — Notion-style task management
+    // ══════════════════════════════════════════════════════════════════
+    let tasks = [];
+    let taskFilter = 'all';
+    let taskSortKey = 'due';
+    let taskSortAsc = true;
+
+    const TASK_AREAS = {
+      'Uni': { icon: '🎓', color: 'var(--teal)', label: 'Uni Work' },
+      'Project': { icon: '⚗️', color: 'var(--lime)', label: 'Project' },
+      'Engineering': { icon: '🔧', color: 'var(--orange)', label: 'Eng. Skill' },
+      'Deen': { icon: '📖', color: 'var(--gold)', label: 'Deen' },
+      'Personal': { icon: '🏠', color: 'var(--violet)', label: 'Personal' }
+    };
+
+    // Get module names from the modules array (populated by University section)
+    function getModuleNames() {
+      return (modules || []).map(m => m.name);
+    }
+
+    function loadTasks() {
+      tasks = JSON.parse(localStorage.getItem('malik-tasks') || '[]');
+      // Handle daily repeating tasks — auto-create today's instances
+      processRepeatingTasks();
+      renderTasks();
+    }
+
+    function saveTasks() {
+      localStorage.setItem('malik-tasks', JSON.stringify(tasks));
+    }
+
+    function processRepeatingTasks() {
+      const today = new Date().toISOString().split('T')[0];
+      const repeatTasks = tasks.filter(t => t.repeat && t.repeat !== 'none' && !t.done);
+      repeatTasks.forEach(t => {
+        if (t.repeat === 'daily' && t.due && t.due < today) {
+          t.due = today;
+        } else if (t.repeat === 'weekly' && t.due) {
+          const dueDate = new Date(t.due);
+          const now = new Date(today);
+          while (dueDate < now) {
+            dueDate.setDate(dueDate.getDate() + 7);
+          }
+          t.due = dueDate.toISOString().split('T')[0];
+        }
+      });
+      // Reset done status for daily tasks that were completed on a previous day
+      tasks.forEach(t => {
+        if (t.done && t.repeat === 'daily' && t.completedDate && t.completedDate !== today) {
+          t.done = false;
+          t.completedDate = null;
+          t.due = today;
+        }
+        if (t.done && t.repeat === 'weekly' && t.completedDate) {
+          const compDate = new Date(t.completedDate);
+          const now = new Date(today);
+          const daysDiff = Math.floor((now - compDate) / (1000 * 60 * 60 * 24));
+          if (daysDiff >= 7) {
+            t.done = false;
+            t.completedDate = null;
+            const nextDue = new Date(t.due || today);
+            while (nextDue <= now) nextDue.setDate(nextDue.getDate() + 7);
+            t.due = nextDue.toISOString().split('T')[0];
+          }
+        }
+      });
+      saveTasks();
+    }
+
+    function addTask() {
+      const name = document.getElementById('task-new-name').value.trim();
+      if (!name) return;
+      const due = document.getElementById('task-new-due').value || null;
+      const area = document.getElementById('task-new-area').value || '';
+      const module = document.getElementById('task-new-module').value || '';
+      const priority = document.getElementById('task-new-priority').value || 'medium';
+
+      tasks.push({
+        id: Date.now(),
+        name,
+        due,
+        area,
+        module,
+        priority,
+        repeat: 'none',
+        done: false,
+        completedDate: null,
+        created: new Date().toISOString()
+      });
+      saveTasks();
+      document.getElementById('task-new-name').value = '';
+      document.getElementById('task-new-due').value = '';
+      document.getElementById('task-new-area').value = '';
+      document.getElementById('task-new-module').value = '';
+      document.getElementById('task-new-module').style.display = 'none';
+      document.getElementById('task-new-priority').value = 'medium';
+      renderTasks();
+      showNotif('Task added: ' + name);
+    }
+
+    function toggleTask(id) {
+      const t = tasks.find(x => x.id === id);
+      if (!t) return;
+      t.done = !t.done;
+      t.completedDate = t.done ? new Date().toISOString().split('T')[0] : null;
+      saveTasks();
+      renderTasks();
+    }
+
+    function deleteTask(id) {
+      tasks = tasks.filter(x => x.id !== id);
+      saveTasks();
+      renderTasks();
+    }
+
+    function setTaskFilter(f, btn) {
+      taskFilter = f;
+      document.querySelectorAll('.task-filter-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      renderTasks();
+    }
+
+    function sortTasks(key) {
+      if (taskSortKey === key) taskSortAsc = !taskSortAsc;
+      else { taskSortKey = key; taskSortAsc = true; }
+      renderTasks();
+    }
+
+    function getFilteredTasks() {
+      const today = new Date().toISOString().split('T')[0];
+      const inWeek = new Date();
+      inWeek.setDate(inWeek.getDate() + 7);
+      const weekEnd = inWeek.toISOString().split('T')[0];
+
+      let filtered = [...tasks];
+      switch (taskFilter) {
+        case 'today':
+          filtered = filtered.filter(t => !t.done && t.due === today);
+          break;
+        case 'upcoming':
+          filtered = filtered.filter(t => !t.done && t.due && t.due > today && t.due <= weekEnd);
+          break;
+        case 'overdue':
+          filtered = filtered.filter(t => !t.done && t.due && t.due < today);
+          break;
+        case 'done':
+          filtered = filtered.filter(t => t.done);
+          break;
+        default: // 'all' — show not-done first
+          break;
+      }
+
+      // Sort
+      const priOrder = { high: 0, medium: 1, low: 2 };
+      filtered.sort((a, b) => {
+        // Done items always at bottom for 'all'
+        if (taskFilter === 'all') {
+          if (a.done !== b.done) return a.done ? 1 : -1;
+        }
+        let cmp = 0;
+        switch (taskSortKey) {
+          case 'name': cmp = (a.name || '').localeCompare(b.name || ''); break;
+          case 'due':
+            const ad = a.due || '9999-12-31';
+            const bd = b.due || '9999-12-31';
+            cmp = ad.localeCompare(bd);
+            break;
+          case 'area': cmp = (a.area || '').localeCompare(b.area || ''); break;
+          case 'priority': cmp = (priOrder[a.priority] || 1) - (priOrder[b.priority] || 1); break;
+        }
+        return taskSortAsc ? cmp : -cmp;
+      });
+      return filtered;
+    }
+
+    function formatTaskDate(dateStr) {
+      if (!dateStr) return '—';
+      const today = new Date().toISOString().split('T')[0];
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tmrStr = tomorrow.toISOString().split('T')[0];
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const ydStr = yesterday.toISOString().split('T')[0];
+
+      if (dateStr === today) return 'Today';
+      if (dateStr === tmrStr) return 'Tomorrow';
+      if (dateStr === ydStr) return 'Yesterday';
+      const d = new Date(dateStr + 'T00:00:00');
+      return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    }
+
+    function renderTasks() {
+      const tbody = document.getElementById('task-tbody');
+      if (!tbody) return;
+      const filtered = getFilteredTasks();
+      const today = new Date().toISOString().split('T')[0];
+
+      // Update filter counts
+      const allActive = tasks.filter(t => !t.done).length;
+      const todayCount = tasks.filter(t => !t.done && t.due === today).length;
+      const inWeek = new Date(); inWeek.setDate(inWeek.getDate() + 7);
+      const weekEnd = inWeek.toISOString().split('T')[0];
+      const upcomingCount = tasks.filter(t => !t.done && t.due && t.due > today && t.due <= weekEnd).length;
+      const overdueCount = tasks.filter(t => !t.done && t.due && t.due < today).length;
+      const doneCount = tasks.filter(t => t.done).length;
+
+      const countsEl = document.getElementById('tasks-active-count');
+      if (countsEl) countsEl.textContent = allActive;
+
+      // Update home stat
+      const homeTasksEl = document.getElementById('home-tasks');
+      if (homeTasksEl) homeTasksEl.textContent = todayCount;
+
+      if (!filtered.length) {
+        const emptyMsg = {
+          'all': 'No tasks yet — add one below',
+          'today': 'No tasks due today ✓',
+          'upcoming': 'No upcoming tasks this week',
+          'overdue': 'No overdue tasks ✓',
+          'done': 'No completed tasks'
+        }[taskFilter];
+        tbody.innerHTML = '<tr><td colspan="7" style="color:var(--muted2);font-size:12px;text-align:center;padding:24px">' + emptyMsg + '</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(t => {
+        const isOverdue = !t.done && t.due && t.due < today;
+        const areaInfo = TASK_AREAS[t.area] || null;
+        const priColors = { high: 'var(--red)', medium: 'var(--gold)', low: 'var(--muted)' };
+        const priLabels = { high: 'High', medium: 'Med', low: 'Low' };
+        const repeatLabels = { daily: '↻ Daily', weekly: '↻ Weekly', none: '' };
+
+        return '<tr class="' + (t.done ? 'task-done' : '') + (isOverdue ? ' task-overdue' : '') + '" data-task-id="' + t.id + '">' +
+          '<td style="text-align:center"><div class="task-check' + (t.done ? ' checked' : '') + '" onclick="toggleTask(' + t.id + ')"></div></td>' +
+          '<td><span class="task-name-text" onclick="openTaskProps(' + t.id + ')" title="Click to edit">' + t.name + '</span>' +
+          (t.module ? '<div style="font-size:9px;color:var(--muted);margin-top:1px">' + t.module + '</div>' : '') + '</td>' +
+          '<td><span class="task-due-text">' + formatTaskDate(t.due) + '</span></td>' +
+          '<td>' + (areaInfo ?
+            '<span class="task-area-badge" style="border-color:' + areaInfo.color + ';color:' + areaInfo.color + ';background:' + areaInfo.color.replace(')', ',0.06)').replace('var(', 'rgba(').replace('--teal', '0,229,204').replace('--lime', '200,255,0').replace('--orange', '255,85,0').replace('--gold', '251,191,36').replace('--violet', '139,92,246') + '">' + areaInfo.icon + ' ' + areaInfo.label + '</span>' :
+            '<span style="color:var(--muted2);font-size:10px">—</span>') + '</td>' +
+          '<td><span class="task-priority-dot" style="background:' + (priColors[t.priority] || priColors.medium) + '" title="' + (priLabels[t.priority] || 'Medium') + '"></span> <span style="font-size:10px;color:' + (priColors[t.priority] || priColors.medium) + '">' + (priLabels[t.priority] || 'Med') + '</span></td>' +
+          '<td><span class="task-repeat-badge">' + (repeatLabels[t.repeat] || '') + '</span></td>' +
+          '<td><div class="task-actions-cell">' +
+          '<button class="task-icon-btn" onclick="openTaskProps(' + t.id + ')" title="Edit">✏</button>' +
+          '<button class="task-icon-btn del" onclick="deleteTask(' + t.id + ')" title="Delete">✕</button>' +
+          '</div></td></tr>';
+      }).join('');
+    }
+
+    function toggleTaskModuleSelect() {
+      const area = document.getElementById('task-new-area').value;
+      const modSel = document.getElementById('task-new-module');
+      if (area === 'Uni') {
+        modSel.style.display = 'block';
+        const mods = getModuleNames();
+        modSel.innerHTML = '<option value="">Module...</option>' +
+          mods.map(m => '<option value="' + m + '">' + m.substring(0, 30) + '</option>').join('');
+      } else {
+        modSel.style.display = 'none';
+        modSel.value = '';
+      }
+    }
+
+    // ── TASK PROPERTIES MODAL ──────────────────────────────────
+    function openTaskProps(id) {
+      const t = tasks.find(x => x.id === id);
+      if (!t) return;
+      const overlay = document.getElementById('task-props-overlay');
+      const body = document.getElementById('task-props-body');
+
+      const mods = getModuleNames();
+      const moduleOptions = mods.map(m =>
+        '<option value="' + m + '"' + (t.module === m ? ' selected' : '') + '>' + m.substring(0, 35) + '</option>'
+      ).join('');
+
+      body.innerHTML = `
+        <div class="task-prop-group">
+          <div class="task-prop-label">Task Name</div>
+          <input type="text" class="os-input" id="tp-name" value="${t.name.replace(/"/g, '&quot;')}" style="font-size:12px">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="task-prop-group">
+            <div class="task-prop-label">Due Date</div>
+            <input type="date" class="os-input" id="tp-due" value="${t.due || ''}">
+          </div>
+          <div class="task-prop-group">
+            <div class="task-prop-label">Priority</div>
+            <select class="os-input" id="tp-priority">
+              <option value="high"${t.priority === 'high' ? ' selected' : ''}>🔴 High</option>
+              <option value="medium"${t.priority === 'medium' ? ' selected' : ''}>🟡 Medium</option>
+              <option value="low"${t.priority === 'low' ? ' selected' : ''}>🟢 Low</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="task-prop-group">
+            <div class="task-prop-label">Area / Project</div>
+            <select class="os-input" id="tp-area" onchange="document.getElementById('tp-module-group').style.display=this.value==='Uni'?'block':'none'">
+              <option value="">— None —</option>
+              <option value="Uni"${t.area === 'Uni' ? ' selected' : ''}>🎓 Uni Work</option>
+              <option value="Project"${t.area === 'Project' ? ' selected' : ''}>⚗️ Project</option>
+              <option value="Engineering"${t.area === 'Engineering' ? ' selected' : ''}>🔧 Engineering Skill</option>
+              <option value="Deen"${t.area === 'Deen' ? ' selected' : ''}>📖 Deen</option>
+              <option value="Personal"${t.area === 'Personal' ? ' selected' : ''}>🏠 Personal</option>
+            </select>
+          </div>
+          <div class="task-prop-group">
+            <div class="task-prop-label">Repeat</div>
+            <select class="os-input" id="tp-repeat">
+              <option value="none"${t.repeat === 'none' || !t.repeat ? ' selected' : ''}>No Repeat</option>
+              <option value="daily"${t.repeat === 'daily' ? ' selected' : ''}>↻ Daily</option>
+              <option value="weekly"${t.repeat === 'weekly' ? ' selected' : ''}>↻ Weekly</option>
+            </select>
+          </div>
+        </div>
+        <div class="task-prop-group" id="tp-module-group" style="display:${t.area === 'Uni' ? 'block' : 'none'}">
+          <div class="task-prop-label">Uni Module</div>
+          <select class="os-input" id="tp-module">
+            <option value="">— Select module —</option>
+            ${moduleOptions}
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:18px">
+          <button class="btn btn-lime" onclick="saveTaskProps(${t.id})">✓ SAVE CHANGES</button>
+          <button class="btn btn-orange" onclick="closeTaskProps()">CANCEL</button>
+        </div>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:9px;color:var(--muted2)">Created: ${new Date(t.created).toLocaleDateString('en-GB')}</span>
+          <button class="btn btn-sm" style="border-color:var(--red);color:var(--red)" onclick="deleteTask(${t.id});closeTaskProps()">🗑 DELETE TASK</button>
+        </div>
+      `;
+      overlay.classList.add('show');
+    }
+
+    function saveTaskProps(id) {
+      const t = tasks.find(x => x.id === id);
+      if (!t) return;
+      t.name = document.getElementById('tp-name').value.trim() || t.name;
+      t.due = document.getElementById('tp-due').value || null;
+      t.priority = document.getElementById('tp-priority').value;
+      t.area = document.getElementById('tp-area').value;
+      t.repeat = document.getElementById('tp-repeat').value;
+      const modEl = document.getElementById('tp-module');
+      t.module = t.area === 'Uni' && modEl ? modEl.value : '';
+      saveTasks();
+      renderTasks();
+      closeTaskProps();
+      showNotif('Task updated: ' + t.name);
+    }
+
+    function closeTaskProps() {
+      document.getElementById('task-props-overlay').classList.remove('show');
+    }
+
+    // Init tasks
+    setTimeout(loadTasks, 150);
 
     // ── STATS ────────────────────────────────────────────────────────
     function updateStats() {
