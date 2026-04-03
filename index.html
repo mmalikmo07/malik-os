@@ -1993,27 +1993,12 @@
           </div>
         </div>
 
-        <!-- AI QUICK ASK -->
-        <div class="panel">
-          <div class="panel-header"><span class="panel-title">⚡ AI Intelligence — Ask Anything</span></div>
-          <div class="panel-body">
-            <div style="display:flex;gap:8px">
-              <input type="text" class="os-input" id="quick-q"
-                placeholder="Ask anything... e.g. What should I build this month as a 1st year EEE student?"
-                style="flex:1">
-              <button class="btn btn-lime" onclick="quickAsk()">ASK ►</button>
-            </div>
-            <div class="ai-box" id="quick-answer" style="min-height:60px;margin-top:12px">
-              <em style="color:var(--muted2)">Ask anything — AI is online via Railway...</em>
-            </div>
-          </div>
-        </div>
-
         <!-- TASK DATABASE -->
         <div class="panel">
           <div class="panel-header">
             <span class="panel-title">📋 Tasks — Command Centre</span>
             <div style="display:flex;gap:6px;align-items:center">
+              <button class="btn btn-sm" id="task-bulk-actions" style="display:none;border-color:var(--red);color:var(--red);margin-right:6px" onclick="bulkDeleteTasks()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> DELETE SELECTED (<span id="task-selected-count">0</span>)</button>
               <span style="font-family:var(--display);font-size:16px;color:var(--lime)" id="tasks-active-count">0</span>
               <span style="font-size:9px;color:var(--muted);letter-spacing:0.1em">ACTIVE</span>
             </div>
@@ -2031,13 +2016,13 @@
               <table class="task-table" id="task-table">
                 <thead>
                   <tr>
-                    <th style="width:32px">☐</th>
+                    <th style="width:32px"><div class="task-check" id="task-select-all" onclick="toggleSelectMode()" title="Select mode — bulk edit/delete"></div></th>
                     <th style="width:auto" onclick="sortTasks('name')">Task ▾</th>
-                    <th style="width:100px" onclick="sortTasks('due')">Due ▾</th>
-                    <th style="width:130px" onclick="sortTasks('area')">Area ▾</th>
-                    <th style="width:70px" onclick="sortTasks('priority')">Priority ▾</th>
+                    <th style="width:90px" onclick="sortTasks('due')">Due ▾</th>
+                    <th style="width:120px" onclick="sortTasks('area')">Area ▾</th>
+                    <th style="width:80px" onclick="sortTasks('priority')">Priority ▾</th>
                     <th style="width:70px">Repeat</th>
-                    <th style="width:60px"></th>
+                    <th style="width:54px"></th>
                   </tr>
                 </thead>
                 <tbody id="task-tbody"></tbody>
@@ -2065,6 +2050,22 @@
                 <option value="low">● Low</option>
               </select>
               <button class="btn btn-lime btn-sm" onclick="addTask()">+ ADD</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI QUICK ASK -->
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title">⚡ AI Intelligence — Ask Anything</span></div>
+          <div class="panel-body">
+            <div style="display:flex;gap:8px">
+              <input type="text" class="os-input" id="quick-q"
+                placeholder="Ask anything... e.g. What should I build this month as a 1st year EEE student?"
+                style="flex:1">
+              <button class="btn btn-lime" onclick="quickAsk()">ASK ►</button>
+            </div>
+            <div class="ai-box" id="quick-answer" style="min-height:60px;margin-top:12px">
+              <em style="color:var(--muted2)">Ask anything — AI is online via Railway...</em>
             </div>
           </div>
         </div>
@@ -2130,7 +2131,7 @@
                 </select>
                 <button class="btn btn-teal btn-sm" onclick="saveMindmap()">💾 SAVE</button>
                 <button class="btn btn-orange btn-sm" onclick="deleteSavedMindmap()"
-                  title="Delete selected map">🗑</button>
+                  title="Delete selected map"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
               </div>
             </div>
             <div class="panel-body">
@@ -4974,17 +4975,14 @@
         case 'done':
           filtered = filtered.filter(t => t.done);
           break;
-        default: // 'all' — show not-done first
+        default: // 'all' — only active tasks
+          filtered = filtered.filter(t => !t.done);
           break;
       }
 
       // Sort
       const priOrder = { high: 0, medium: 1, low: 2 };
       filtered.sort((a, b) => {
-        // Done items always at bottom for 'all'
-        if (taskFilter === 'all') {
-          if (a.done !== b.done) return a.done ? 1 : -1;
-        }
         let cmp = 0;
         switch (taskSortKey) {
           case 'name': cmp = (a.name || '').localeCompare(b.name || ''); break;
@@ -5042,38 +5040,49 @@
 
       if (!filtered.length) {
         const emptyMsg = {
-          'all': 'No tasks yet — add one below',
-          'today': 'No tasks due today ✓',
+          'all': 'No tasks yet \u2014 add one below',
+          'today': 'No tasks due today \u2713',
           'upcoming': 'No upcoming tasks this week',
-          'overdue': 'No overdue tasks ✓',
+          'overdue': 'No overdue tasks \u2713',
           'done': 'No completed tasks'
         }[taskFilter];
         tbody.innerHTML = '<tr><td colspan="7" style="color:var(--muted2);font-size:12px;text-align:center;padding:24px">' + emptyMsg + '</td></tr>';
         return;
       }
 
+      const trashSvg = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
+
       tbody.innerHTML = filtered.map(t => {
         const isOverdue = !t.done && t.due && t.due < today;
         const areaInfo = TASK_AREAS[t.area] || null;
         const priColors = { high: 'var(--red)', medium: 'var(--gold)', low: 'var(--muted)' };
         const priLabels = { high: 'High', medium: 'Med', low: 'Low' };
-        const repeatLabels = { daily: '↻ Daily', weekly: '↻ Weekly', none: '' };
+        const repeatLabels = { daily: '\u21bb Daily', weekly: '\u21bb Weekly', none: '' };
+        const isSelected = taskSelectMode && selectedTaskIds.has(t.id);
 
         return '<tr class="' + (t.done ? 'task-done' : '') + (isOverdue ? ' task-overdue' : '') + '" data-task-id="' + t.id + '">' +
-          '<td style="text-align:center"><div class="task-check' + (t.done ? ' checked' : '') + '" onclick="toggleTask(' + t.id + ')"></div></td>' +
+          '<td style="text-align:center">' + (taskSelectMode ?
+            '<div class="task-check' + (isSelected ? ' checked' : '') + '" onclick="toggleTaskSelect(' + t.id + ')"></div>' :
+            '<div class="task-check' + (t.done ? ' checked' : '') + '" onclick="toggleTask(' + t.id + ')"></div>') + '</td>' +
           '<td><span class="task-name-text" onclick="openTaskProps(' + t.id + ')" title="Click to edit">' + t.name + '</span>' +
           (t.module ? '<div style="font-size:9px;color:var(--muted);margin-top:1px">' + t.module + '</div>' : '') + '</td>' +
           '<td><span class="task-due-text">' + formatTaskDate(t.due) + '</span></td>' +
           '<td>' + (areaInfo ?
             '<span class="task-area-badge" style="border-color:' + areaInfo.color + ';color:' + areaInfo.color + ';background:' + areaInfo.color.replace(')', ',0.06)').replace('var(', 'rgba(').replace('--teal', '0,229,204').replace('--lime', '200,255,0').replace('--orange', '255,85,0').replace('--gold', '251,191,36').replace('--violet', '139,92,246') + '">' + areaInfo.icon + ' ' + areaInfo.label + '</span>' :
-            '<span style="color:var(--muted2);font-size:10px">—</span>') + '</td>' +
+            '<span style="color:var(--muted2);font-size:10px">\u2014</span>') + '</td>' +
           '<td><span class="task-priority-dot" style="background:' + (priColors[t.priority] || priColors.medium) + '" title="' + (priLabels[t.priority] || 'Medium') + '"></span> <span style="font-size:10px;color:' + (priColors[t.priority] || priColors.medium) + '">' + (priLabels[t.priority] || 'Med') + '</span></td>' +
           '<td><span class="task-repeat-badge">' + (repeatLabels[t.repeat] || '') + '</span></td>' +
           '<td><div class="task-actions-cell">' +
-          '<button class="task-icon-btn" onclick="openTaskProps(' + t.id + ')" title="Edit">✏</button>' +
-          '<button class="task-icon-btn del" onclick="deleteTask(' + t.id + ')" title="Delete">✕</button>' +
+          '<button class="task-icon-btn" onclick="openTaskProps(' + t.id + ')" title="Edit">\u270f</button>' +
+          '<button class="task-icon-btn del" onclick="deleteTask(' + t.id + ')" title="Delete">' + trashSvg + '</button>' +
           '</div></td></tr>';
       }).join('');
+
+      // Update select-all header checkbox state
+      const selAllEl = document.getElementById('task-select-all');
+      if (selAllEl) {
+        selAllEl.className = 'task-check' + (taskSelectMode ? ' checked' : '');
+      }
     }
 
     function toggleTaskModuleSelect() {
@@ -5155,7 +5164,7 @@
         </div>
         <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
           <span style="font-size:9px;color:var(--muted2)">Created: ${new Date(t.created).toLocaleDateString('en-GB')}</span>
-          <button class="btn btn-sm" style="border-color:var(--red);color:var(--red)" onclick="deleteTask(${t.id});closeTaskProps()">🗑 DELETE TASK</button>
+          <button class="btn btn-sm" style="border-color:var(--red);color:var(--red)" onclick="deleteTask(${t.id});closeTaskProps()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> DELETE TASK</button>
         </div>
       `;
       overlay.classList.add('show');
@@ -5179,6 +5188,46 @@
 
     function closeTaskProps() {
       document.getElementById('task-props-overlay').classList.remove('show');
+    }
+
+    // ── SELECT MODE (bulk edit/delete) ────────────────────────
+    let taskSelectMode = false;
+    let selectedTaskIds = new Set();
+
+    function toggleSelectMode() {
+      taskSelectMode = !taskSelectMode;
+      selectedTaskIds.clear();
+      const bulkBar = document.getElementById('task-bulk-actions');
+      if (bulkBar) bulkBar.style.display = taskSelectMode ? 'inline-flex' : 'none';
+      updateSelectedCount();
+      renderTasks();
+      if (taskSelectMode) showNotif('Select mode ON — tick tasks to select, then delete');
+      else showNotif('Select mode OFF');
+    }
+
+    function toggleTaskSelect(id) {
+      if (selectedTaskIds.has(id)) selectedTaskIds.delete(id);
+      else selectedTaskIds.add(id);
+      updateSelectedCount();
+      renderTasks();
+    }
+
+    function updateSelectedCount() {
+      const el = document.getElementById('task-selected-count');
+      if (el) el.textContent = selectedTaskIds.size;
+    }
+
+    function bulkDeleteTasks() {
+      if (!selectedTaskIds.size) { showNotif('No tasks selected'); return; }
+      if (!confirm('Delete ' + selectedTaskIds.size + ' selected task(s)?')) return;
+      tasks = tasks.filter(t => !selectedTaskIds.has(t.id));
+      selectedTaskIds.clear();
+      taskSelectMode = false;
+      const bulkBar = document.getElementById('task-bulk-actions');
+      if (bulkBar) bulkBar.style.display = 'none';
+      saveTasks();
+      renderTasks();
+      showNotif('Tasks deleted');
     }
 
     // Init tasks
