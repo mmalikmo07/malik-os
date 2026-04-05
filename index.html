@@ -2421,8 +2421,10 @@
           <div class="panel-header"><span class="panel-title" id="gym-day-title">SELECT A DAY ABOVE</span></div>
           <div class="panel-body">
             <table class="gym-table" id="gym-table"></table>
-            <div style="margin-top:14px;display:flex;gap:8px">
+            <div style="margin-top:14px;display:flex;gap:8px;align-items:center">
               <button class="btn btn-teal" onclick="logGymSession()">✓ LOG SESSION</button>
+              <span style="color:var(--muted2);font-size:11px;margin-left:8px;">Custom Date (optional):</span>
+              <input type="datetime-local" class="os-input" id="gym-custom-date" style="font-size:11px;padding:4px 8px;width:150px;height:24px">
             </div>
           </div>
         </div>
@@ -3704,20 +3706,24 @@
         showNotif('Fill in at least one weight before logging');
         return;
       }
+      const dateInput = document.getElementById('gym-custom-date');
+      const targetDate = (dateInput && dateInput.value) ? new Date(dateInput.value).toISOString() : new Date().toISOString();
+
       const localSessions = JSON.parse(localStorage.getItem('malik-gym-sessions-local') || '[]');
       const newSession = {
         id: Date.now(),
         day: curGymDay,
         day_title: gymDays[curGymDay].title,
         weights: snap,
-        logged_at: new Date().toISOString()
+        logged_at: targetDate
       };
       
       try {
         await api('POST', '/api/gym/sessions', {
           dayNum: curGymDay,
           dayTitle: gymDays[curGymDay].title,
-          weights: snap
+          weights: snap,
+          loggedAt: targetDate
         });
         showNotif('Session logged (Cloud): ' + gymDays[curGymDay].title);
         await loadGymLog();
