@@ -3704,19 +3704,33 @@
         showNotif('Fill in at least one weight before logging');
         return;
       }
+      const localSessions = JSON.parse(localStorage.getItem('malik-gym-sessions-local') || '[]');
+      const newSession = {
+        id: Date.now(),
+        day: curGymDay,
+        day_title: gymDays[curGymDay].title,
+        weights: snap,
+        logged_at: new Date().toISOString()
+      };
+      
       try {
         await api('POST', '/api/gym/sessions', {
           dayNum: curGymDay,
           dayTitle: gymDays[curGymDay].title,
           weights: snap
         });
-        showNotif('Session logged: ' + gymDays[curGymDay].title);
+        showNotif('Session logged (Cloud): ' + gymDays[curGymDay].title);
         await loadGymLog();
-        const sel = document.getElementById('chart-exercise');
-        if (sel && sel.value) renderProgressChart();
       } catch (e) {
-        showNotif('Failed to log session online', 'error');
+        // Fallback to local if API is down
+        localSessions.unshift(newSession);
+        localStorage.setItem('malik-gym-sessions-local', JSON.stringify(localSessions.slice(0, 100)));
+        showNotif('Session logged (Local): ' + gymDays[curGymDay].title);
+        await loadGymLog();
       }
+      
+      const sel = document.getElementById('chart-exercise');
+      if (sel && sel.value) renderProgressChart();
     }
 
     async function loadGymLog() {
